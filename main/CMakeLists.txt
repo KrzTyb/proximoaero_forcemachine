@@ -54,6 +54,7 @@ target_link_libraries(${PROJECT_NAME}
     Qt6::Quick
     Qt6::Multimedia
     chartjsplugin
+    chartjs
     controller
     mainplugin
 )
