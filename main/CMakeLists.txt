@@ -34,6 +34,7 @@ set(RES
 qt6_add_executable(${PROJECT_NAME}
     ${SOURCES}
 )
+
 qt6_add_library(main STATIC)
 qt6_add_qml_module(main
     URI main
@@ -48,7 +49,7 @@ target_compile_definitions(${PROJECT_NAME}
     $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>
 )
 
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(main
     PRIVATE 
     Qt6::Core 
     Qt6::Quick
@@ -56,5 +57,13 @@ target_link_libraries(${PROJECT_NAME}
     chartjsplugin
     chartjs
     controller
+)
+
+target_link_libraries(${PROJECT_NAME}
+    PRIVATE
+    Qt6::Core
+    Qt6::Quick
+    controller
     mainplugin
+    main
 )
