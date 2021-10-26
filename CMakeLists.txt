@@ -15,3 +15,5 @@ add_subdirectory(helpers)
 add_subdirectory(main)
 add_subdirectory(connectors)
 add_subdirectory(controller)
+
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)
