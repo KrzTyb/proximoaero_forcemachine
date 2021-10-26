@@ -28,6 +28,7 @@ set(RES
     images/Start_Button_Pressed.png
     images/Start_Button.png
     images/Tile.png
+    images/ProximoAeroLogoWithShadow.png
 )
 
 qt6_add_executable(${PROJECT_NAME}

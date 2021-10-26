@@ -131,6 +131,17 @@ Item {
             }
         }
 
+        Image {
+                    id: logo
+                    x: 136
+                    y: 8
+                    width: 160
+                    height: 128
+                    source: "images/ProximoAeroLogoWithShadow.png"
+                    fillMode: Image.PreserveAspectFit
+
+        }
+
 
 
         ContentPreview {
