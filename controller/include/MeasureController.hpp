@@ -5,16 +5,28 @@
 
 #include "ForceTypes.hpp"
 
+#include <QJsonArray>
+#include <zmq.hpp>
 
 class MeasureWorker : public QObject
 {
     Q_OBJECT
+public:
+    MeasureWorker(QObject *parent = nullptr);
+    ~MeasureWorker();
 public slots:
-    void startMeasure();
-    void stopMeasure();
+    void startMeasure(int measureTimeMS, int intervalMS);
 
 signals:
-    void measureReady(MeasureListPtr measurements);
+    void measureReady(MeasureStatus status, MeasureListPtr measurements);
+private:
+    void receiveMeasure();
+    void unpackMeasureAndSend(const QJsonArray &jsonMeasurements);
+
+    double voltageToForce(double voltage);
+
+    zmq::context_t context{1};
+    zmq::socket_t socket{context, zmq::socket_type::req};
 };
 
 
@@ -26,9 +38,8 @@ public:
     ~MeasureController();
 
 signals:
-    void startMeasure();
-    void stopMeasure();
-    void measurementsReceived(MeasureListPtr measurements);
+    void startMeasure(int measureTimeMS, int intervalMS);
+    void measurementsReceived(MeasureStatus status, MeasureListPtr measurements);
 
 private:
     QThread workerThread;

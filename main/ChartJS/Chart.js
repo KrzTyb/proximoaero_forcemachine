@@ -1618,6 +1618,7 @@ function hwbString(hwb, alpha) {
            + (alpha !== undefined && alpha !== 1 ? ", " + alpha : "") + ")";
 }
 
+var reverseNames = {};
 function keyword(rgb) {
   return reverseNames[rgb.slice(0, 3)];
 }
@@ -1634,7 +1635,6 @@ function hexDouble(num) {
 
 
 //create a list of reverse color names
-var reverseNames = {};
 for (var name in colorName$1) {
    reverseNames[colorName$1[name]] = name;
 }

@@ -6,6 +6,26 @@
 #include "BackendConnector.hpp"
 #include "MeasureController.hpp"
 
+#include "GPIOInputs.hpp"
+#include "GPIOOutputs.hpp"
+#include "StepMotor.hpp"
+
+#include <zmq.hpp>
+
+enum class ForceProgramState
+{
+    Idle,
+    CheckDoor,
+    CalibrationDown,
+    CalibrationUp,
+    Go50cm,
+    GetScale,
+    GetHeight,
+    GoToHeight,
+    CheckInputStates,
+    Measure,
+    ShowResult
+};
 
 class ForceController : public QObject
 {
@@ -18,6 +38,8 @@ private slots:
     void onStartClicked();
 
 private:
+
+    void executeStates();
 
     void connectUI();
 
@@ -32,4 +54,12 @@ private:
     MeasureController m_measureController;
 
     double m_scaleKg {0.0};
+
+    zmq::context_t context{1};
+    zmq::socket_t socket{context, zmq::socket_type::pub};
+    void logMeasure(MeasureListPtr measurements);
+
+    GPIOInputs  m_gpioInputs;
+    GPIOOutputs m_gpioOutputs;
+    StepMotor   m_stepMotor;
 };

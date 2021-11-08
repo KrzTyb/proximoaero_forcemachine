@@ -23,7 +23,9 @@ int main(int argc, char *argv[])
 
     engine.rootContext()->setContextProperty("BackendConnector", uiConnector.get());
 
-    const QUrl url(u"qrc:/main/main.qml"_qs);
+    engine.addImportPath(u"qrc:/main"_qs);
+
+    const QUrl url(u"qrc:/main/Main/main.qml"_qs);
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreated,
         &app, [url](QObject *obj, const QUrl &objUrl)

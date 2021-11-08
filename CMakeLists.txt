@@ -9,6 +9,7 @@ set(CMAKE_AUTOMOC ON)
 
 find_package(Qt6 6.2 COMPONENTS Core Quick Multimedia REQUIRED)
 
+set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/main)
 
 # Add directories
 add_subdirectory(helpers)

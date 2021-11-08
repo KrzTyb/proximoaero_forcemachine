@@ -4,6 +4,12 @@
 #include <QList>
 #include <QSharedPointer>
 
+enum class MeasureStatus
+{
+    Error,
+    Ok
+};
+
 class MeasureElement
 {
     Q_GADGET

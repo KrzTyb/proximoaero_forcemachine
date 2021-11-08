@@ -31,20 +31,17 @@ set(RES
     images/ProximoAeroLogoWithShadow.png
 )
 
-qt6_add_executable(${PROJECT_NAME}
-    ${SOURCES}
-)
-
 qt6_add_library(main STATIC)
 qt6_add_qml_module(main
-    URI main
+    URI Main
     VERSION 1.0
     QML_FILES ${QML_SOURCES}
     RESOURCES ${RES}
+    RESOURCE_PREFIX /main
 )
 
 
-target_compile_definitions(${PROJECT_NAME}
+target_compile_definitions(main
     PRIVATE
     $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>
 )
@@ -55,15 +52,24 @@ target_link_libraries(main
     Qt6::Quick
     Qt6::Multimedia
     chartjsplugin
-    chartjs
     controller
+)
+
+qt6_add_executable(${PROJECT_NAME}
+    ${SOURCES}
 )
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
     Qt6::Core
     Qt6::Quick
+    Qt6::Multimedia
     controller
     mainplugin
-    main
+    chartjsplugin
+)
+
+target_compile_definitions(${PROJECT_NAME}
+    PRIVATE
+    $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:QT_QML_DEBUG>
 )

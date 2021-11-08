@@ -1,6 +1,6 @@
 import QtQuick
 
-import ChartJS
+import Main.ChartJS 1.0
 
 Item {
     id: rootChartLine
@@ -16,7 +16,7 @@ Item {
         color: "#FFFFFF"
     }
 
-    Chart {
+    ChartView {
         id: chartLine
         anchors.fill: parent
         chartType: 'line'
@@ -42,12 +42,18 @@ Item {
                             type: 'linear',
                             scaleLabel: {
                                 display: true,
-                                labelString: 'Przemieszczenie'
+                                labelString: 'Czas [ms]',
+                                fontColor: "black"
                             },
                             ticks: {
                                 beginAtZero: true,
                                 min: 0.0,
-                                max: 200.0
+                                max: 3500.0,
+                                fontColor: "black"
+                            },
+                            gridLines: {
+                                display: true,
+                                color: "black"
                             }
                         }],
                     yAxes: [{
@@ -55,12 +61,18 @@ Item {
                             type: 'linear',
                             scaleLabel: {
                                 display: true,
-                                labelString: 'Siła'
+                                labelString: 'Siła [N]',
+                                fontColor: "black"
                             },
                             ticks: {
                                 beginAtZero: true,
                                 min: 0.0,
-                                max: 100.0
+                                max: 120.0,
+                                fontColor: "black"
+                            },
+                            gridLines: {
+                                display: true,
+                                color: "black"
                             }
                         }]
                 },

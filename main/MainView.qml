@@ -15,6 +15,17 @@ Item {
         color: "#414141"
         anchors.fill: parent
 
+        Image {
+                    id: logo
+                    x: 136
+                    y: 8
+                    width: 160
+                    height: 128
+                    source: "images/ProximoAeroLogoWithShadow.png"
+                    fillMode: Image.PreserveAspectFit
+        }
+
+
         NumericKeyboard {
             id: numericKeyboard
             x: 0
@@ -88,18 +99,19 @@ Item {
 
         Image {
             id: start_Button
-            x: 153
+            x: 128
             y: 142
+            width: 161
+            height: 73
             source: "images/Start_Button.png"
-            fillMode: Image.PreserveAspectFit
 
             Text {
                 id: start_text
-                x: 40
-                y: 8
+                x: 62
+                y: 15
                 color: "#FFFFFF"
                 text: qsTr("Start")
-                font.pixelSize: 17
+                font.pixelSize: 22
                 font.weight: Font.Bold
             }
 
@@ -107,41 +119,34 @@ Item {
             {
                 start_Button.source = "images/Start_Button_Pressed.png"
                 start_text.color = "#000000"
-                start_Button.x = 161
+                start_Button.x = 140
                 start_Button.y = 146
-                start_text.x = 32
+                start_text.x = 50
+                start_Button.width = 150
+                start_Button.height = 60
             }
 
             function setReleased()
             {
                 start_Button.source = "images/Start_Button.png"
                 start_text.color = "#FFFFFF"
-                start_Button.x = 153
-                start_text.x = 40
+                start_Button.x = 128
+                start_text.x = 62
                 start_Button.y = 142
+                start_Button.width = 161
+                start_Button.height = 73
             }
 
             MouseArea {
-                anchors.fill: parent
-                onClicked:
+                width: parent.width
+                height: parent.height
+                onPressed:
                 {
                     BackendConnector.setScale(scaleInput.text)
                     BackendConnector.clickStart()
                 }
             }
         }
-
-        Image {
-                    id: logo
-                    x: 136
-                    y: 8
-                    width: 160
-                    height: 128
-                    source: "images/ProximoAeroLogoWithShadow.png"
-                    fillMode: Image.PreserveAspectFit
-
-        }
-
 
 
         ContentPreview {
@@ -160,13 +165,11 @@ Item {
             {
                 start_Button.setPressed()
                 start_Button.enabled = false
-                console.log("Blocked")
             }
             else
             {
                 start_Button.enabled = true
                 start_Button.setReleased()
-                console.log("Unblocked")
             }
         }
     }

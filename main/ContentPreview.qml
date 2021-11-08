@@ -40,29 +40,27 @@ Item {
         visible: false
         anchors.fill: parent
 
+        CaptureSession {
+            id: capture_session
+            videoOutput: camera_output
+            camera: Camera {
+
+            }
+        }
+
         VideoOutput {
             id: camera_output
             width: parent.width - 8
             height: parent.height - 8
             x: 8
             fillMode: VideoOutput.PreserveAspectCrop
-
-        }
-
-        CaptureSession {
-
-            videoOutput: camera_output
-            camera: Camera {
-                id: camera
-                exposureMode: Camera.ExposureAction
-            }
         }
     }
 
 
     Item {
         id: chart_view
-        visible: true
+        visible: false
         width: parent.width - 8
         height: parent.height - 8
         x: 8
@@ -78,14 +76,7 @@ Item {
         target: BackendConnector
         function onSetCameraVisible(visible)
         {
-            if (visible)
-            {
-                camera_view.visible = true
-            }
-            else
-            {
-                camera_view.visible = false
-            }
+            camera_view.visible = visible
         }
 
         function onSetChartVisible(visible)
