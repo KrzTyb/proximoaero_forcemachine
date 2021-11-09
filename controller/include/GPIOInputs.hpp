@@ -63,6 +63,25 @@ private:
     GPIO m_gpio {19, GPIO_TYPE::BOTH_EDGES};
 };
 
+class MechanicalStartButtonListener : public QObject
+{
+    Q_OBJECT
+    friend class GPIOInputs;
+public:
+    MechanicalStartButtonListener(QObject *parent = nullptr);
+    ~MechanicalStartButtonListener() = default;
+public slots:
+    void startListen();
+
+signals:
+    void stateChanged(bool state);
+
+private:
+    bool getState() { return m_gpio.read(); }
+
+    GPIO m_gpio {26, GPIO_TYPE::BOTH_EDGES};
+};
+
 class GPIOInputs : public QObject
 {
     Q_OBJECT
@@ -73,22 +92,27 @@ public:
     bool getLowerLimitState() { return m_lowerLimitState; }
     bool getUpperLimitState() { return m_upperLimitState; }
     bool getDoorState() { return m_doorState; }
+    bool getButtonStartState() { return m_mechanicalButtonStartState; }
 
 signals:
     void startLowerLimitListen();
     void startUpperLimitListen();
     void startDoorListen();
+    void startButtonStartListen();
 
     void lowerLimitStateChanged(bool state);
     void upperLimitStateChanged(bool state);
     void doorStateChanged(bool state);
+    void startButtonStateChanged(bool state);
 
 private:
     QThread lowerLimitThread;
     QThread upperLimitThread;
     QThread doorThread;
+    QThread mechanicalStartButtonThread;
 
     bool m_lowerLimitState {false};
     bool m_upperLimitState {false};
     bool m_doorState {false};
+    bool m_mechanicalButtonStartState {false};
 };
