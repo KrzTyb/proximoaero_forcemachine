@@ -103,7 +103,7 @@ void MeasureWorker::unpackMeasureAndSend(const QJsonArray &jsonMeasurements)
     for (const auto &arrayElement : jsonMeasurements)
     {
         auto jsonObject = arrayElement.toObject();
-        measureListPtr->append({voltageToForce(jsonObject["voltage"].toDouble()), jsonObject["time_ms"].toDouble()});
+        measureListPtr->append({jsonObject["voltage"].toDouble(), jsonObject["time_ms"].toDouble()});
     }
 
     emit measureReady(MeasureStatus::Ok, measureListPtr);

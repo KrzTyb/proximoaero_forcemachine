@@ -61,13 +61,13 @@ Item {
                             type: 'linear',
                             scaleLabel: {
                                 display: true,
-                                labelString: 'Siła [N]',
+                                labelString: 'Napięcie [V]',
                                 fontColor: "black"
                             },
                             ticks: {
                                 beginAtZero: true,
                                 min: 0.0,
-                                max: 120.0,
+                                max: 6.0,
                                 fontColor: "black"
                             },
                             gridLines: {

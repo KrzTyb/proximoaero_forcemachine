@@ -14,6 +14,12 @@ set(QML_SOURCES
     KeyDel.qml
     NumericKeyboard.qml
     ChartLine.qml
+    DoorPopup.qml
+    CalibrationPopup.qml
+    ConfigPopup.qml
+    MeasurePopup.qml
+
+    DebugMenu.qml
 )
 
 set(RES
@@ -29,6 +35,7 @@ set(RES
     images/Start_Button.png
     images/Tile.png
     images/ProximoAeroLogoWithShadow.png
+    images/ProximoAeroLogo.png
 )
 
 qt6_add_library(main STATIC)

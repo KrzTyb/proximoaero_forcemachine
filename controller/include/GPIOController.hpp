@@ -2,9 +2,15 @@
 
 #include <stdint.h>
 #include <chrono>
+#include <string>
+
+#include "config.h"
+
+#if BUILD_ARM
 
 #include <gpiod.hpp>
 
+#endif
 
 enum class GPIO_TYPE
 {
@@ -18,7 +24,8 @@ enum class GPIO_TYPE
 enum class GPIO_EVENT_TYPE
 {
     RISING_EDGE,
-    FALLING_EDGE
+    FALLING_EDGE,
+    UNKNOWN
 };
 
 class GPIO
@@ -34,10 +41,18 @@ public:
     GPIO_EVENT_TYPE getEventType();
     
 
-    std::string getName() { return m_line.name(); }
+    std::string getName()
+    {
+#if BUILD_ARM
+        return m_line.name();
+#else
+        return "UNKNOWN";
+#endif
+    }
 
 private:
-
+#if BUILD_ARM
     ::gpiod::line           m_line;
     ::gpiod::line_request   m_lineRequest;
+#endif
 };

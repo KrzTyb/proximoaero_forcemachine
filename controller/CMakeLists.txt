@@ -19,6 +19,12 @@ set(SOURCES
 
     include/StepMotor.hpp
     StepMotor.cpp
+
+    include/USBDeviceHandler.hpp
+    USBDeviceHandler.cpp
+
+    include/DataSaver.hpp
+    DataSaver.cpp
 )
 
 add_library(${NAME} ${SOURCES})
@@ -33,5 +39,12 @@ target_link_libraries(${NAME}
         connectors
         helpers
         zmq
+        Qt6::Concurrent
+)
+
+if(BUILD_ARM)
+target_link_libraries(${NAME}
+    PUBLIC
         gpiodcxx
 )
+endif()

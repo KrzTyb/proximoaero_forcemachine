@@ -1,5 +1,9 @@
 #include "GPIOController.hpp"
 
+#include "config.h"
+
+
+#if BUILD_ARM == 1
 
 namespace
 {
@@ -47,3 +51,40 @@ GPIO_EVENT_TYPE GPIO::getEventType()
     }
     return GPIO_EVENT_TYPE::FALLING_EDGE;
 }
+
+#else
+
+#include <QThread>
+
+GPIO::GPIO(uint8_t pinNumber, GPIO_TYPE type, bool defaultState)
+{
+
+}
+
+GPIO::~GPIO()
+{
+}
+
+bool GPIO::read()
+{
+    return false;
+}
+
+void GPIO::write(bool state)
+{
+
+}
+
+bool GPIO::waitToEvent(const ::std::chrono::nanoseconds& timeout)
+{
+    QThread::usleep(timeout.count() / 1000.0);
+    return false;
+}
+
+GPIO_EVENT_TYPE GPIO::getEventType()
+{
+    return GPIO_EVENT_TYPE::UNKNOWN;
+}
+
+
+#endif

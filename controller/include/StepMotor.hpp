@@ -4,6 +4,7 @@
 #include <QThread>
 
 #include "GPIOController.hpp"
+#include <QFutureWatcher>
 
 struct GPIOInputsStates
 {
@@ -19,21 +20,27 @@ enum class StepDir
     Down
 };
 
+Q_DECLARE_METATYPE(StepDir);
+
 class StepMotorWorker : public QObject
 {
     Q_OBJECT
 public:
     StepMotorWorker(GPIOInputsStates gpioInputStates, QObject *parent = nullptr);
     ~StepMotorWorker();
-public slots:
-    void lowerLimitStateChanged(bool state);
-    void upperLimitStateChanged(bool state);
-    void doorStateChanged(bool state);
 
     void goUp();
     void goDown();
     void go(Milimeters milimeters, StepDir dir);
     void stop();
+
+public slots:
+    void lowerLimitStateChanged(bool state);
+    void upperLimitStateChanged(bool state);
+    void doorStateChanged(bool state);
+
+signals:
+    void goFinished();
 
 private:
     int64_t milimetersToSteps(Milimeters milimeters);
@@ -54,16 +61,19 @@ public:
     explicit StepMotor(GPIOInputsStates inputStates, QObject *parent = nullptr);
     ~StepMotor();
 
-signals:
-    void lowerLimitStateChanged(bool state);
-    void upperLimitStateChanged(bool state);
-    void doorStateChanged(bool state);
-
     void goUp();
     void goDown();
     void go(Milimeters milimeters, StepDir dir);
     void stop();
 
+signals:
+    void lowerLimitStateChanged(bool state);
+    void upperLimitStateChanged(bool state);
+    void doorStateChanged(bool state);
+    void goFinished();
+
 private:
     QThread stepMotorThread;
+    StepMotorWorker m_motorWorker;
+    QFutureWatcher<void> m_goWatcher;
 };

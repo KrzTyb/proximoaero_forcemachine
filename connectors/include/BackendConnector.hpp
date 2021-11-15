@@ -16,7 +16,18 @@ public:
 signals:
 
     void startClicked();
-    void blockStartClicked(bool blocked);
+    void blockStartClick(bool blocked);
+    void blockSetHeightClick(bool blocked);
+    void blockExportClick(bool blocked);
+
+    void showDoorPopup(bool visible);
+    void showCalibrationPopup(bool visible);
+    void openConfigPopup();
+    void closeConfigPopup();
+
+    void setWaitPopupState(bool visible);
+    void setStartPopupState(bool visible);
+    void configEndClicked(int height);
 
     void scaleChanged(QString scale);
 

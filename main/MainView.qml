@@ -16,15 +16,43 @@ Item {
         anchors.fill: parent
 
         Image {
-                    id: logo
-                    x: 136
-                    y: 8
-                    width: 160
-                    height: 128
-                    source: "images/ProximoAeroLogoWithShadow.png"
-                    fillMode: Image.PreserveAspectFit
+            id: logo
+            x: 51
+            y: 54
+            width: 315
+            height: 235
+            source: "images/ProximoAeroLogo.png"
         }
 
+        function scaleOnKeyClicked(key)
+        {
+            if (scaleInput.text.includes(".") && key === ".")
+            {
+                return
+            }
+
+            scaleInput.insert(scaleInput.cursorPosition, key)
+        }
+
+        function scaleOnDeleteClicked()
+        {
+            scaleInput.remove(scaleInput.cursorPosition - 1, scaleInput.cursorPosition)
+            if (scaleInput.text.length === 0)
+            {
+                return
+            }
+
+            if (scaleInput.text.indexOf(".") === scaleInput.text.length-1)
+            {
+                scaleInput.insert(scaleInput.text.length, "0")
+                scaleInput.cursorPosition -= 1
+            }
+            if (scaleInput.text.indexOf(".") === 0)
+            {
+                scaleInput.insert(0, "0")
+                scaleInput.cursorPosition -= 1
+            }
+        }
 
         NumericKeyboard {
             id: numericKeyboard
@@ -33,40 +61,26 @@ Item {
 
             onKeyClicked: function onKeyClicked(key)
             {
-                if (scaleInput.text.includes(".") && key === ".")
+                if (scaleInput.focus)
                 {
-                    return
+                    parent.scaleOnKeyClicked(key)
                 }
-
-                scaleInput.insert(scaleInput.cursorPosition, key)
             }
             onDeleteClicked: function onDeleteClicked()
             {
-                scaleInput.remove(scaleInput.cursorPosition - 1, scaleInput.cursorPosition)
-                if (scaleInput.text.length === 0)
+                if (scaleInput.focus)
                 {
-                    return
-                }
-
-                if (scaleInput.text.indexOf(".") === scaleInput.text.length-1)
-                {
-                    scaleInput.insert(scaleInput.text.length, "0")
-                    scaleInput.cursorPosition -= 1
-                }
-                if (scaleInput.text.indexOf(".") === 0)
-                {
-                    scaleInput.insert(0, "0")
-                    scaleInput.cursorPosition -= 1
+                    parent.scaleOnDeleteClicked()
                 }
             }
         }
 
         Text {
             id: scaleInfo
-            x: 136
-            y: 199
+            x: 489
+            y: 362
             width: 153
-            height: 49
+            height: 34
             color: "#ffffff"
             text: qsTr("Waga [kg]")
             font.pixelSize: 19
@@ -77,8 +91,8 @@ Item {
 
         Image {
             id: scaleInputBackground
-            x: 128
-            y: 254
+            x: 481
+            y: 402
             source: "images/ScaleInputBackground.png"
             fillMode: Image.PreserveAspectFit
 
@@ -97,57 +111,73 @@ Item {
             }
         }
 
-        Image {
-            id: start_Button
-            x: 128
-            y: 142
-            width: 161
-            height: 73
-            source: "images/Start_Button.png"
+        Button {
+            id: startButton
+            x: 489
+            y: 488
+            width: 153
+            height: 54
+            text: qsTr("Start")
+            font.weight: Font.Bold
 
-            Text {
-                id: start_text
-                x: 62
-                y: 15
-                color: "#FFFFFF"
-                text: qsTr("Start")
-                font.pixelSize: 22
-                font.weight: Font.Bold
+            enabled: true
+
+            background: Rectangle {
+                opacity: enabled ? 1 : 0.3
+                color: startButton.down ? "#DCDCDC" : "#2F4F4F"
+                radius: 8
+                border.color: startButton.down ? "#DCDCDC" : "black"
+                border.width: 2
+            }
+            font.pointSize: 15
+            contentItem: Text {
+                opacity: enabled ? 1.0 : 0.3
+                color: startButton.down ? "black" : "white"
+                text: startButton.text
+                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                font: startButton.font
             }
 
-            function setPressed()
+            onPressed:
             {
-                start_Button.source = "images/Start_Button_Pressed.png"
-                start_text.color = "#000000"
-                start_Button.x = 140
-                start_Button.y = 146
-                start_text.x = 50
-                start_Button.width = 150
-                start_Button.height = 60
-            }
-
-            function setReleased()
-            {
-                start_Button.source = "images/Start_Button.png"
-                start_text.color = "#FFFFFF"
-                start_Button.x = 128
-                start_text.x = 62
-                start_Button.y = 142
-                start_Button.width = 161
-                start_Button.height = 73
-            }
-
-            MouseArea {
-                width: parent.width
-                height: parent.height
-                onPressed:
-                {
-                    BackendConnector.setScale(scaleInput.text)
-                    BackendConnector.clickStart()
-                }
+                BackendConnector.setScale(scaleInput.text)
+                BackendConnector.clickStart()
             }
         }
 
+        Button {
+            id: exportButton
+            x: 756
+            y: 488
+            width: 159
+            height: 54
+
+            text: qsTr("Eksport danych")
+            font.weight: Font.Bold
+
+            enabled: false
+
+
+            background: Rectangle {
+                opacity: enabled ? 1 : 0.3
+                color: exportButton.down ? "#DCDCDC" : "#2F4F4F"
+                radius: 8
+                border.color: exportButton.down ? "#DCDCDC" : "black"
+                border.width: 2
+            }
+            font.pointSize: 12
+            contentItem: Text {
+                opacity: enabled ? 1.0 : 0.3
+                color: exportButton.down ? "black" : "white"
+                text: exportButton.text
+                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                font: exportButton.font
+            }
+        }
 
         ContentPreview {
             id: contentPreview
@@ -156,21 +186,88 @@ Item {
         }
     }
 
+    DoorPopup
+    {
+        id: doorPopup
+        visible: false
+    }
+
+    CalibrationPopup
+    {
+        id: calibPopup
+        visible: false
+    }
+
+    ConfigPopup
+    {
+        id: configPopup
+        visible: false
+    }
+
+    MeasurePopup
+    {
+        id: measurePopup
+        visible: false
+    }
+
+    Connections {
+        target: configPopup
+        function onNext2Clicked(height)
+        {
+            BackendConnector.configEndClicked(height)
+        }
+    }
 
     Connections {
         target: BackendConnector
-        function onBlockStartClicked(blocked)
+        function onBlockStartClick(blocked)
         {
-            if (blocked)
-            {
-                start_Button.setPressed()
-                start_Button.enabled = false
-            }
-            else
-            {
-                start_Button.enabled = true
-                start_Button.setReleased()
-            }
+            startButton.enabled = blocked ? false : true
+        }
+
+        function onBlockSetHeightClick(blocked)
+        {
+            heightButton.enabled = blocked ? false : true
+        }
+
+        function onBlockExportClick(blocked)
+        {
+            exportButton.enabled = blocked ? false : true
+        }
+
+        function onShowDoorPopup(visible)
+        {
+            doorPopup.visible = visible
+        }
+
+        function onShowCalibrationPopup(visible)
+        {
+            calibPopup.visible = visible
+        }
+
+        function onOpenConfigPopup()
+        {
+            configPopup.step = 0
+            configPopup.visible = true
+        }
+
+        function onCloseConfigPopup()
+        {
+            configPopup.visible = false
+        }
+
+        function onSetWaitPopupState(visible)
+        {
+            measurePopup.indicatorVisible = true
+            measurePopup.infoText = qsTr("Proszę czekać")
+            measurePopup.visible = visible
+        }
+    
+        function onSetStartPopupState(visible)
+        {
+            measurePopup.indicatorVisible = false
+            measurePopup.infoText = qsTr("Wciśnij START")
+            measurePopup.visible = visible
         }
     }
 }

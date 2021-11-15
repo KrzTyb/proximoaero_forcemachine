@@ -6,10 +6,13 @@ Item {
     width: 417
     height: 270
 
+    property bool backgroudEnabled: true
+
     Image {
         id: background
         source: "images/KeyboardTile.png"
         anchors.fill: parent
+        visible: keyboard_root.backgroudEnabled
     }
     signal keyClicked(key: string)
     signal deleteClicked()

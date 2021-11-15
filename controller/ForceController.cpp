@@ -4,16 +4,24 @@
 
 #include <GPIOController.hpp>
 
+#include <QTimer>
+
 constexpr uint32_t MEASURE_TIME_MS = 3000;
 constexpr uint32_t MEASURE_INTERVAL_MS = 10;
 
 
-ForceController::ForceController(QSharedPointer<BackendConnector> uiConnector, QObject *parent)
+ForceController::ForceController(QSharedPointer<BackendConnector> uiConnector,
+    QSharedPointer<MeasureController> measureController,
+    QSharedPointer<DataSaver> dataSaver,
+    QSharedPointer<GPIOInputs> gpioInputs,
+    QObject *parent)
     : QObject(parent),
-      m_uiConnector{std::move(uiConnector)},
-      m_gpioInputs{},
+      m_uiConnector{uiConnector},
+      m_measureController{measureController},
+      m_dataSaver{dataSaver},
+      m_gpioInputs{gpioInputs},
       m_gpioOutputs{},
-      m_stepMotor{ {m_gpioInputs.getLowerLimitState(), m_gpioInputs.getUpperLimitState(), m_gpioInputs.getDoorState()} }
+      m_stepMotor{ {m_gpioInputs->getLowerLimitState(), m_gpioInputs->getUpperLimitState(), m_gpioInputs->getDoorState()} }
 {
 
     try
@@ -30,32 +38,17 @@ ForceController::ForceController(QSharedPointer<BackendConnector> uiConnector, Q
         connectUI();
     }
 
-    connect(&m_gpioInputs, &GPIOInputs::lowerLimitStateChanged, &m_stepMotor, &StepMotor::lowerLimitStateChanged);
-    connect(&m_gpioInputs, &GPIOInputs::upperLimitStateChanged, &m_stepMotor, &StepMotor::upperLimitStateChanged);
-    connect(&m_gpioInputs, &GPIOInputs::doorStateChanged, &m_stepMotor, &StepMotor::doorStateChanged);
+    QObject::connect(m_measureController.get(), &MeasureController::measurementsReceived, m_dataSaver.get(), &DataSaver::onMeasureReceived);
 
-    connect(&m_measureController, &MeasureController::measurementsReceived, this,
-        [this](auto status, auto measurements)
-        {
-            if (status != MeasureStatus::Ok)
-            {
-                emit m_uiConnector->blockStartClicked(false);
-                return;
-            }
-
-            logMeasure(measurements);
-
-            auto measureList = MeasureList{*measurements};
-            measurements = nullptr;
-            setChartData(std::move(measureList));
-            setChartVisible();
-            emit m_uiConnector->blockStartClicked(false);
-        });
+    connect(m_gpioInputs.get(), &GPIOInputs::lowerLimitStateChanged, &m_stepMotor, &StepMotor::lowerLimitStateChanged);
+    connect(m_gpioInputs.get(), &GPIOInputs::upperLimitStateChanged, &m_stepMotor, &StepMotor::upperLimitStateChanged);
+    connect(m_gpioInputs.get(), &GPIOInputs::doorStateChanged, &m_stepMotor, &StepMotor::doorStateChanged);
 
     
-    emit m_gpioInputs.startLowerLimitListen();
-    emit m_gpioInputs.startUpperLimitListen();
-    emit m_gpioInputs.startDoorListen();
+    emit m_gpioInputs->startLowerLimitListen();
+    emit m_gpioInputs->startUpperLimitListen();
+    emit m_gpioInputs->startDoorListen();
+    emit m_gpioInputs->startButtonStartListen();
 }
 
 void ForceController::logMeasure(MeasureListPtr measurements)
@@ -94,35 +87,9 @@ void ForceController::connectUI()
 
 void ForceController::onStartClicked()
 {
-    emit m_uiConnector->blockStartClicked(true);
-    executeMeasure();
-}
-
-void ForceController::executeMeasure()
-{
-    setCameraVisible();
-
-    QMetaObject::Connection upConnection = connect(&m_gpioInputs, &GPIOInputs::upperLimitStateChanged, this,
-        [this, &upConnection](auto state)
-        {
-            if (state)
-            {
-                disconnect(upConnection);
-
-                QMetaObject::Connection downConnection = connect(&m_gpioInputs, &GPIOInputs::upperLimitStateChanged, this,
-                    [this, &downConnection](auto state)
-                    {
-                        if (state)
-                        {
-                            emit m_measureController.startMeasure(MEASURE_TIME_MS, MEASURE_INTERVAL_MS);
-                            disconnect(downConnection);
-                        }
-                    });
-
-                emit m_stepMotor.goDown();
-            }
-        });
-    emit m_stepMotor.goUp();
+    emit m_uiConnector->blockStartClick(true);
+    emit m_uiConnector->blockExportClick(true);
+    startMeasure();
 }
 
 void ForceController::setCameraVisible()
@@ -148,7 +115,297 @@ void ForceController::hidePreview()
     emit m_uiConnector->setChartVisible(false);
 }
 
-void ForceController::executeStates()
+void ForceController::initialize()
 {
+    qDebug() << "Initialize started";
+    m_gpioOutputs.setSupportingElectromagnetState(false);
+    m_gpioOutputs.setBoltState(false);
+    m_gpioOutputs.setRedLedState(false);
+    m_gpioOutputs.setBlueLedState(false);
+    m_gpioOutputs.setGreenLedState(false);
+    m_gpioOutputs.setWhiteLedState(false);
 
+    qDebug() << "Checking door";
+    if (!m_gpioInputs->getDoorState())
+    {
+        qDebug() << "Door opened, waiting for close";
+        emit m_uiConnector->showDoorPopup(true);
+        m_gpioOutputs.setRedLedState(true);
+
+        QObject *obj = new QObject(this);
+        connect(m_gpioInputs.get(), &GPIOInputs::doorStateChanged, obj,
+        [this, obj](bool state)
+        {
+            if (state)
+            {
+                obj->deleteLater();
+                qDebug() << "Door closed";
+                emit m_uiConnector->showDoorPopup(false);
+                calibration();
+            }
+        });
+    }
+    else
+    {
+        calibration();
+    }
+}
+
+
+void ForceController::calibration()
+{
+    qDebug() << "Calibration started";
+    m_gpioOutputs.setRedLedState(true);
+    m_gpioOutputs.setBlueLedState(true);
+    m_gpioOutputs.setGreenLedState(true);
+    m_gpioOutputs.setWhiteLedState(true);
+    emit m_uiConnector->showCalibrationPopup(true);
+
+    if (!m_gpioInputs->getLowerLimitState())
+    {
+        goDown();
+    }
+    else
+    {
+        m_gpioOutputs.setSupportingElectromagnetState(true);
+        QTimer::singleShot(500, this, [this](){goUp();});
+    }
+}
+
+void ForceController::goDown()
+{
+    QObject *obj = new QObject(this);
+    connect(m_gpioInputs.get(), &GPIOInputs::lowerLimitStateChanged, obj,
+    [this, obj](auto state)
+    {
+        if (state)
+        {
+            obj->deleteLater();
+            qDebug() << "Low limiter detected";
+            m_gpioOutputs.setSupportingElectromagnetState(true);
+
+            QTimer::singleShot(3000, this,
+                [this]()
+                {
+                    m_gpioOutputs.setBoltState(false);
+                    QTimer::singleShot(500, this, [this](){goUp();});
+                } 
+            );
+        }
+    });
+    m_gpioOutputs.setBoltState(true);
+    QTimer::singleShot(500, this, [this](){m_stepMotor.goDown();});
+}
+
+void ForceController::goUp()
+{
+    QObject *obj = new QObject(this);
+
+    connect(m_gpioInputs.get(), &GPIOInputs::upperLimitStateChanged, obj,
+    [this, obj](auto state)
+    {
+        if (state)
+        {
+            obj->deleteLater();
+            qDebug() << "Up limiter detected";
+            goHalfMeterFromUp();
+        }
+    });
+
+    m_stepMotor.goUp();
+}
+
+void ForceController::goHalfMeterFromUp()
+{
+    qDebug() << "Go to 0.5m";
+    QObject *obj = new QObject(this);
+
+    connect(&m_stepMotor, &StepMotor::goFinished, obj,
+    [this, obj]()
+    {
+        obj->deleteLater();
+        m_gpioOutputs.setRedLedState(false);
+        m_gpioOutputs.setBlueLedState(true);
+        m_gpioOutputs.setGreenLedState(false);
+        m_gpioOutputs.setWhiteLedState(true);
+        qDebug() << "Calibration finished";
+        emit m_uiConnector->showCalibrationPopup(false);
+        m_ready = true;
+    });
+
+    m_stepMotor.go(500, StepDir::Down);
+}
+
+void ForceController::startMeasure()
+{
+    if (!m_ready)
+    {
+        prepareToReady();
+        return;
+    }
+    m_ready = false;
+
+    emit m_uiConnector->setWaitPopupState(false);
+    emit m_uiConnector->openConfigPopup();
+    qDebug() << "Preparation started";
+
+    QObject *obj = new QObject(this);
+
+    connect(m_uiConnector.get(), &BackendConnector::configEndClicked, obj,
+    [this, obj](auto height)
+    {
+        obj->deleteLater();
+        emit m_uiConnector->closeConfigPopup();
+        qDebug() << "Go - height: " << height << " cm";
+        emit m_uiConnector->setWaitPopupState(true);
+        goToPosition(height * 10); // Convert from cm to mm
+    });
+
+}
+
+
+void ForceController::goToPosition(int heightMilimeters)
+{
+    QObject *obj = new QObject(this);
+
+    connect(&m_stepMotor, &StepMotor::goFinished, obj,
+    [this, obj]()
+    {
+        obj->deleteLater();
+        m_gpioOutputs.setRedLedState(false);
+        m_gpioOutputs.setBlueLedState(false);
+        m_gpioOutputs.setGreenLedState(true);
+        m_gpioOutputs.setWhiteLedState(false);
+
+        m_gpioOutputs.setBoltState(true);
+
+        qDebug() << "Position ready";
+        QTimer::singleShot(5000, this,
+        [this]()
+        {
+            QObject *execMeasureObj = new QObject(this);
+
+            connect(m_gpioInputs.get(), &GPIOInputs::startButtonStateChanged, execMeasureObj,
+            [this, execMeasureObj](auto state)
+            {
+                if (state)
+                {
+                    execMeasureObj->deleteLater();
+                    emit m_uiConnector->setStartPopupState(false);
+                    executeMeasure();
+                }
+            });
+
+            emit m_uiConnector->setStartPopupState(true);
+        });
+    });
+
+
+    int actualPositionMilimeters = 500;
+
+    int diff = heightMilimeters - actualPositionMilimeters;
+
+    if (diff < 0)
+    {
+        m_stepMotor.go(abs(diff), StepDir::Down);
+    }
+    else
+    {
+        m_stepMotor.go(diff, StepDir::Up);
+    }
+}
+
+void ForceController::executeMeasure()
+{
+    qDebug() << "Measure started";
+
+    QObject *obj = new QObject(this);
+
+    connect(m_dataSaver.get(), &DataSaver::captureFinished, obj,
+    [this, obj]()
+    {
+        qDebug() << "Measure end";
+        obj->deleteLater();
+
+        m_gpioOutputs.setBoltState(false);
+        presentation();
+    });
+
+    setCameraVisible();
+    m_dataSaver->startCapture();
+    emit m_measureController->startMeasure(MEASURE_TIME_MS, MEASURE_INTERVAL_MS);
+
+    m_gpioOutputs.setSupportingElectromagnetState(false);
+}
+
+void ForceController::presentation()
+{
+    auto measurements = m_dataSaver->getMeasurements();
+
+    if (measurements)
+    {
+        logMeasure(measurements);
+        auto measureList = MeasureList{*measurements};
+        setChartData(std::move(measureList));
+        setChartVisible();
+        emit m_uiConnector->blockExportClick(false);
+    }
+    else
+    {
+        hidePreview();
+    }
+    emit m_uiConnector->blockStartClick(false);
+
+}
+
+void ForceController::prepareToReady()
+{
+    m_gpioOutputs.setRedLedState(true);
+    m_gpioOutputs.setBlueLedState(true);
+    m_gpioOutputs.setGreenLedState(true);
+    m_gpioOutputs.setWhiteLedState(true);
+    m_gpioOutputs.setBoltState(true);
+    emit m_uiConnector->setWaitPopupState(true);
+
+
+    QObject *downObj = new QObject(this);
+    connect(m_gpioInputs.get(), &GPIOInputs::lowerLimitStateChanged, downObj,
+    [this, downObj](auto state)
+    {
+        if (state)
+        {
+            downObj->deleteLater();
+            qDebug() << "Low limiter detected";
+            m_gpioOutputs.setSupportingElectromagnetState(true);
+            m_gpioOutputs.setBoltState(false);
+
+            QTimer::singleShot(500, this, [this]()
+            {
+                m_gpioOutputs.setRedLedState(false);
+                m_gpioOutputs.setBlueLedState(true);
+                m_gpioOutputs.setGreenLedState(false);
+                m_gpioOutputs.setWhiteLedState(true);
+                goHalfMeterFromDown();
+            });
+        }
+    });
+
+
+    QTimer::singleShot(500, this, [this](){m_stepMotor.goDown();});
+}
+
+void ForceController::goHalfMeterFromDown()
+{
+    qDebug() << "Go to 0.5m";
+    QObject *obj = new QObject(this);
+
+    connect(&m_stepMotor, &StepMotor::goFinished, obj,
+    [this, obj]()
+    {
+        obj->deleteLater();
+        m_ready = true;
+        startMeasure();
+    });
+
+    m_stepMotor.go(500, StepDir::Up);
 }

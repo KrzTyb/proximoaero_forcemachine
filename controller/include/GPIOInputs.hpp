@@ -94,6 +94,11 @@ public:
     bool getDoorState() { return m_doorState; }
     bool getButtonStartState() { return m_mechanicalButtonStartState; }
 
+    Q_INVOKABLE void debug_lowerLimitState(bool state) { m_lowerLimitState = state; emit lowerLimitStateChanged(m_lowerLimitState); };
+    Q_INVOKABLE void debug_upperLimitState(bool state) { m_upperLimitState = state; emit upperLimitStateChanged(m_upperLimitState); };
+    Q_INVOKABLE void debug_doorState(bool state) { m_doorState = state; emit doorStateChanged(m_doorState); };
+    Q_INVOKABLE void debug_startButtonState(bool state) { m_mechanicalButtonStartState = state; emit startButtonStateChanged(m_mechanicalButtonStartState); };
+
 signals:
     void startLowerLimitListen();
     void startUpperLimitListen();

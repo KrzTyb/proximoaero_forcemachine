@@ -1,0 +1,5 @@
+#pragma once
+
+
+#define BUILD_ARM @BUILD_ARM@
+#define BUILD_PC @BUILD_PC@
