@@ -44,6 +44,19 @@ ForceController::ForceController(QSharedPointer<BackendConnector> uiConnector,
     connect(m_gpioInputs.get(), &GPIOInputs::upperLimitStateChanged, &m_stepMotor, &StepMotor::upperLimitStateChanged);
     connect(m_gpioInputs.get(), &GPIOInputs::doorStateChanged, &m_stepMotor, &StepMotor::doorStateChanged);
 
+
+    connect(m_gpioInputs.get(), &GPIOInputs::doorStateChanged, this,
+    [this](auto closed)
+    {
+        if (!closed && m_doorPopupPossible)
+        {
+            emit m_uiConnector->showDoorPopup(true);
+        }
+        else
+        {
+            emit m_uiConnector->showDoorPopup(false);
+        }
+    });
     
     emit m_gpioInputs->startLowerLimitListen();
     emit m_gpioInputs->startUpperLimitListen();
@@ -88,7 +101,6 @@ void ForceController::connectUI()
 void ForceController::onStartClicked()
 {
     emit m_uiConnector->blockStartClick(true);
-    emit m_uiConnector->blockExportClick(true);
     startMeasure();
 }
 
@@ -117,6 +129,16 @@ void ForceController::hidePreview()
 
 void ForceController::initialize()
 {
+    m_doorPopupPossible = true;
+    if (!m_gpioInputs->getDoorState())
+    {
+        emit m_uiConnector->showDoorPopup(true);
+    }
+    else
+    {
+        emit m_uiConnector->showDoorPopup(false);
+    }
+
     qDebug() << "Initialize started";
     m_gpioOutputs.setSupportingElectromagnetState(false);
     m_gpioOutputs.setBoltState(false);
@@ -124,6 +146,13 @@ void ForceController::initialize()
     m_gpioOutputs.setBlueLedState(false);
     m_gpioOutputs.setGreenLedState(false);
     m_gpioOutputs.setWhiteLedState(false);
+
+    // TODO: Remove
+    // emit m_uiConnector->showCalibrationPopup(false);
+    // m_ready = true;
+    // executeMeasure();
+    // return;
+    // TODO: Remove
 
     qDebug() << "Checking door";
     if (!m_gpioInputs->getDoorState())
@@ -154,6 +183,16 @@ void ForceController::initialize()
 
 void ForceController::calibration()
 {
+    m_doorPopupPossible = true;
+    if (!m_gpioInputs->getDoorState())
+    {
+        emit m_uiConnector->showDoorPopup(true);
+    }
+    else
+    {
+        emit m_uiConnector->showDoorPopup(false);
+    }
+
     qDebug() << "Calibration started";
     m_gpioOutputs.setRedLedState(true);
     m_gpioOutputs.setBlueLedState(true);
@@ -174,14 +213,21 @@ void ForceController::calibration()
 
 void ForceController::goDown()
 {
-    QObject *obj = new QObject(this);
-    connect(m_gpioInputs.get(), &GPIOInputs::lowerLimitStateChanged, obj,
-    [this, obj](auto state)
+    m_doorPopupPossible = true;
+    if (!m_gpioInputs->getDoorState())
     {
-        if (state)
+        emit m_uiConnector->showDoorPopup(true);
+    }
+    else
+    {
+        emit m_uiConnector->showDoorPopup(false);
+    }
+
+    if (m_gpioInputs->getLowerLimitState())
+    {
+        m_gpioOutputs.setBoltState(true);
+        QTimer::singleShot(500, this, [this]()
         {
-            obj->deleteLater();
-            qDebug() << "Low limiter detected";
             m_gpioOutputs.setSupportingElectromagnetState(true);
 
             QTimer::singleShot(3000, this,
@@ -191,32 +237,82 @@ void ForceController::goDown()
                     QTimer::singleShot(500, this, [this](){goUp();});
                 } 
             );
-        }
-    });
-    m_gpioOutputs.setBoltState(true);
-    QTimer::singleShot(500, this, [this](){m_stepMotor.goDown();});
+        });
+    }
+    else
+    {
+        QObject *obj = new QObject(this);
+        connect(m_gpioInputs.get(), &GPIOInputs::lowerLimitStateChanged, obj,
+        [this, obj](auto state)
+        {
+            if (state)
+            {
+                obj->deleteLater();
+                qDebug() << "Low limiter detected";
+                m_gpioOutputs.setSupportingElectromagnetState(true);
+
+                QTimer::singleShot(3000, this,
+                    [this]()
+                    {
+                        m_gpioOutputs.setBoltState(false);
+                        QTimer::singleShot(500, this, [this](){goUp();});
+                    } 
+                );
+            }
+        });
+        m_gpioOutputs.setBoltState(true);
+        QTimer::singleShot(500, this, [this](){m_stepMotor.goDown();});
+    }
 }
 
 void ForceController::goUp()
 {
-    QObject *obj = new QObject(this);
-
-    connect(m_gpioInputs.get(), &GPIOInputs::upperLimitStateChanged, obj,
-    [this, obj](auto state)
+    m_doorPopupPossible = true;
+    if (!m_gpioInputs->getDoorState())
     {
-        if (state)
-        {
-            obj->deleteLater();
-            qDebug() << "Up limiter detected";
-            goHalfMeterFromUp();
-        }
-    });
+        emit m_uiConnector->showDoorPopup(true);
+    }
+    else
+    {
+        emit m_uiConnector->showDoorPopup(false);
+    }
 
-    m_stepMotor.goUp();
+    if (m_gpioInputs->getUpperLimitState())
+    {
+        qDebug() << "Up limiter detected";
+        goHalfMeterFromUp();
+    }
+    else
+    {
+        QObject *obj = new QObject(this);
+        connect(m_gpioInputs.get(), &GPIOInputs::upperLimitStateChanged, obj,
+        [this, obj](auto state)
+        {
+            if (state)
+            {
+                obj->deleteLater();
+                qDebug() << "Up limiter detected";
+                goHalfMeterFromUp();
+            }
+        });
+
+        m_stepMotor.goUp();
+    }
+
 }
 
 void ForceController::goHalfMeterFromUp()
 {
+    m_doorPopupPossible = true;
+    if (!m_gpioInputs->getDoorState())
+    {
+        emit m_uiConnector->showDoorPopup(true);
+    }
+    else
+    {
+        emit m_uiConnector->showDoorPopup(false);
+    }
+
     qDebug() << "Go to 0.5m";
     QObject *obj = new QObject(this);
 
@@ -231,6 +327,7 @@ void ForceController::goHalfMeterFromUp()
         qDebug() << "Calibration finished";
         emit m_uiConnector->showCalibrationPopup(false);
         m_ready = true;
+        m_doorPopupPossible = false;
     });
 
     m_stepMotor.go(500, StepDir::Down);
@@ -238,12 +335,27 @@ void ForceController::goHalfMeterFromUp()
 
 void ForceController::startMeasure()
 {
+    m_doorPopupPossible = true;
+    if (!m_gpioInputs->getDoorState())
+    {
+        emit m_uiConnector->showDoorPopup(true);
+    }
+    else
+    {
+        emit m_uiConnector->showDoorPopup(false);
+    }
+
+    m_dataSaver->clearData();
     if (!m_ready)
     {
         prepareToReady();
         return;
     }
     m_ready = false;
+
+    m_doorPopupPossible = false;
+    emit m_uiConnector->showDoorPopup(false);
+
 
     emit m_uiConnector->setWaitPopupState(false);
     emit m_uiConnector->openConfigPopup();
@@ -288,6 +400,7 @@ void ForceController::goToPosition(int heightMilimeters)
             connect(m_gpioInputs.get(), &GPIOInputs::startButtonStateChanged, execMeasureObj,
             [this, execMeasureObj](auto state)
             {
+                qDebug() << "Mechanical start button clicked";
                 if (state)
                 {
                     execMeasureObj->deleteLater();
@@ -340,6 +453,9 @@ void ForceController::executeMeasure()
 
 void ForceController::presentation()
 {
+    m_doorPopupPossible = false;
+    emit m_uiConnector->showDoorPopup(false);
+
     auto measurements = m_dataSaver->getMeasurements();
 
     if (measurements)
@@ -348,7 +464,6 @@ void ForceController::presentation()
         auto measureList = MeasureList{*measurements};
         setChartData(std::move(measureList));
         setChartVisible();
-        emit m_uiConnector->blockExportClick(false);
     }
     else
     {

@@ -39,6 +39,7 @@ target_link_libraries(${NAME}
         connectors
         helpers
         zmq
+        Qt6::Multimedia
         Qt6::Concurrent
 )
 

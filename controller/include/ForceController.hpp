@@ -70,4 +70,6 @@ private:
     StepMotor   m_stepMotor;
 
     bool        m_ready {false};
+
+    bool        m_doorPopupPossible {false};
 };

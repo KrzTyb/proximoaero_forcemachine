@@ -21,11 +21,11 @@ public:
     void setSupportingElectromagnetState(bool state) { m_supportingElectromagnet.write(state); }
 
 private:
-    GPIO m_redLed {16, GPIO_TYPE::OUTPUT};
-    GPIO m_blueLed {20, GPIO_TYPE::OUTPUT};
-    GPIO m_greenLed {21, GPIO_TYPE::OUTPUT};
-    GPIO m_whiteLed {13, GPIO_TYPE::OUTPUT};
+    GPIO m_redLed {16, GPIO_TYPE::OUTPUT, false};
+    GPIO m_blueLed {20, GPIO_TYPE::OUTPUT, false};
+    GPIO m_greenLed {21, GPIO_TYPE::OUTPUT, false};
+    GPIO m_whiteLed {13, GPIO_TYPE::OUTPUT, false};
 
-    GPIO m_bolt {23, GPIO_TYPE::OUTPUT};
-    GPIO m_supportingElectromagnet {24, GPIO_TYPE::OUTPUT};
+    GPIO m_bolt {23, GPIO_TYPE::OUTPUT, false};
+    GPIO m_supportingElectromagnet {24, GPIO_TYPE::OUTPUT, false};
 };

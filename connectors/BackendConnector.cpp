@@ -20,3 +20,8 @@ void BackendConnector::setScale(QString scale)
 
     emit scaleChanged(scale);
 }
+
+void BackendConnector::exportData()
+{
+    emit exportButtonClicked();
+}

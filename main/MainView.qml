@@ -58,6 +58,7 @@ Item {
             id: numericKeyboard
             x: 0
             y: 330
+            visible: false
 
             onKeyClicked: function onKeyClicked(key)
             {
@@ -77,6 +78,7 @@ Item {
 
         Text {
             id: scaleInfo
+            visible: false
             x: 489
             y: 362
             width: 153
@@ -91,6 +93,7 @@ Item {
 
         Image {
             id: scaleInputBackground
+            visible: false
             x: 481
             y: 402
             source: "images/ScaleInputBackground.png"
@@ -176,6 +179,11 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
                 font: exportButton.font
+            }
+
+            onPressed:
+            {
+                BackendConnector.exportData()
             }
         }
 

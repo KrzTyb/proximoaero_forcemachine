@@ -13,6 +13,8 @@ public:
     Q_INVOKABLE void clickStart();
     Q_INVOKABLE void setScale(QString scale);
 
+    Q_INVOKABLE void exportData();
+
 signals:
 
     void startClicked();
@@ -35,5 +37,7 @@ signals:
 
     void setCameraVisible(bool visible);
     void setChartVisible(bool visible);
+
+    void exportButtonClicked();
 };
 

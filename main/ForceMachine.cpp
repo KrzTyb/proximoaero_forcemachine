@@ -30,13 +30,16 @@ int main(int argc, char *argv[])
     qRegisterMetaType<MeasureList>();
     qRegisterMetaType<MeasureElement>();
 
+    QSharedPointer<BackendConnector> uiConnector = QSharedPointer<BackendConnector>::create();
+
     QSharedPointer<USBDeviceHandler> usbHandler = QSharedPointer<USBDeviceHandler>::create();
     QSharedPointer<MeasureController> measureController = QSharedPointer<MeasureController>::create();
-    QSharedPointer<DataSaver> dataSaver = QSharedPointer<DataSaver>::create(usbHandler);
+    QSharedPointer<DataSaver> dataSaver = QSharedPointer<DataSaver>::create(uiConnector, usbHandler);
 
-    QSharedPointer<BackendConnector> uiConnector = QSharedPointer<BackendConnector>::create();
     QSharedPointer<GPIOInputs> gpioInputs = QSharedPointer<GPIOInputs>::create();
     QPointer<ForceController> forceController = new ForceController(uiConnector, measureController, dataSaver, gpioInputs);
+
+    QThread::sleep(1);
 
     QQmlApplicationEngine engine;
 

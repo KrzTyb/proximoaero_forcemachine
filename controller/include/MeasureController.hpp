@@ -25,6 +25,8 @@ private:
 
     double voltageToForce(double voltage);
 
+    double calculateDisplacement(double initialVoltage, double voltage, double initialCurrent, double current);
+
     zmq::context_t context{1};
     zmq::socket_t socket{context, zmq::socket_type::req};
 };

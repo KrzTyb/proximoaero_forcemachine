@@ -79,7 +79,7 @@ signals:
 private:
     bool getState() { return m_gpio.read(); }
 
-    GPIO m_gpio {26, GPIO_TYPE::BOTH_EDGES};
+    GPIO m_gpio {26, GPIO_TYPE::BOTH_EDGES, false};
 };
 
 class GPIOInputs : public QObject

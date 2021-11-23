@@ -42,13 +42,13 @@ Item {
                             type: 'linear',
                             scaleLabel: {
                                 display: true,
-                                labelString: 'Czas [ms]',
+                                labelString: 'Przemieszczenie [mm]',
                                 fontColor: "black"
                             },
                             ticks: {
                                 beginAtZero: true,
                                 min: 0.0,
-                                max: 3500.0,
+                                max: 35.0,
                                 fontColor: "black"
                             },
                             gridLines: {
@@ -61,13 +61,13 @@ Item {
                             type: 'linear',
                             scaleLabel: {
                                 display: true,
-                                labelString: 'Napięcie [V]',
+                                labelString: 'Siła [N]',
                                 fontColor: "black"
                             },
                             ticks: {
                                 beginAtZero: true,
                                 min: 0.0,
-                                max: 6.0,
+                                max: 1000.0,
                                 fontColor: "black"
                             },
                             gridLines: {

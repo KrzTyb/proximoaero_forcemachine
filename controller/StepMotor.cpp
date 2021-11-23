@@ -85,8 +85,8 @@ void StepMotorWorker::goUp()
 {
     qDebug() << "Go Up";
     running = true;
-    m_enPin.write(false);
-    m_dirPin.write(false);
+    m_enPin.write(true);
+    m_dirPin.write(true);
     while (!m_gpioInputStates.upperLimiter && running)
     {
         m_pullPin.write(true);
@@ -94,7 +94,7 @@ void StepMotorWorker::goUp()
         m_pullPin.write(false);
         QThread::usleep(STEP_INTERVAL_US);
     }
-    m_enPin.write(true);
+    m_enPin.write(false);
     running = false;
 }
 
@@ -102,8 +102,8 @@ void StepMotorWorker::goDown()
 {
     qDebug() << "Go Down";
     running = true;
-    m_enPin.write(false);
-    m_dirPin.write(true);
+    m_enPin.write(true);
+    m_dirPin.write(false);
     while (!m_gpioInputStates.lowerLimiter && running)
     {
         m_pullPin.write(true);
@@ -111,7 +111,7 @@ void StepMotorWorker::goDown()
         m_pullPin.write(false);
         QThread::usleep(STEP_INTERVAL_US);
     }
-    m_enPin.write(true);
+    m_enPin.write(false);
     running = false;
 }
 
@@ -122,32 +122,32 @@ void StepMotorWorker::go(Milimeters milimeters, StepDir dir)
     running = true;
     auto steps = milimetersToSteps(milimeters);
     qDebug() << "Steps: " << steps;
-    m_enPin.write(false);
+    m_enPin.write(true);
     if (dir == StepDir::Up)
-    {
-        m_dirPin.write(false);
-    }
-    else
     {
         m_dirPin.write(true);
     }
+    else
+    {
+        m_dirPin.write(false);
+    }
     while (steps && running)
     {
-        if ((dir == StepDir::Down) && m_gpioInputStates.lowerLimiter)
-        {
-            break;
-        }
-        else if ((dir == StepDir::Up) && m_gpioInputStates.upperLimiter)
-        {
-            break;
-        }
+        // if ((dir == StepDir::Down) && m_gpioInputStates.lowerLimiter)
+        // {
+        //     break;
+        // }
+        // else if ((dir == StepDir::Up) && m_gpioInputStates.upperLimiter)
+        // {
+        //     break;
+        // }
         m_pullPin.write(true);
         QThread::usleep(STEP_INTERVAL_US);
         m_pullPin.write(false);
         QThread::usleep(STEP_INTERVAL_US);
         steps--;
     }
-    m_enPin.write(true);
+    m_enPin.write(false);
     running = false;
     qDebug() << "Go on position finished";
     emit goFinished();

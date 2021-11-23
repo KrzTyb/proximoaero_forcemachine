@@ -18,7 +18,9 @@ GPIO::GPIO(uint8_t pinNumber, GPIO_TYPE type, bool defaultState)
 {
     m_line = chip.get_line(pinNumber);
 
-    m_lineRequest = ::gpiod::line_request{REQUEST_CONSUMER, static_cast<int>(type), 0};
+    m_lineRequest = ::gpiod::line_request{};
+    m_lineRequest.consumer = REQUEST_CONSUMER;
+    m_lineRequest.request_type = static_cast<int>(type);
 
     m_line.request(m_lineRequest, defaultState);
 }
