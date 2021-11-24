@@ -78,7 +78,7 @@ Item {
 
         Text {
             id: scaleInfo
-            visible: false
+            visible: true
             x: 489
             y: 362
             width: 153
@@ -93,7 +93,7 @@ Item {
 
         Image {
             id: scaleInputBackground
-            visible: false
+            visible: true
             x: 481
             y: 402
             source: "images/ScaleInputBackground.png"
