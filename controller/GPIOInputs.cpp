@@ -61,7 +61,7 @@ GPIOInputs::GPIOInputs(QObject *parent)
     connect(startButtonListener, &MechanicalStartButtonListener::stateChanged, this,
         [this](auto state)
         {
-            m_doorState = state;
+            m_mechanicalButtonStartState = state;
             qDebug() << "startButton changed: " << m_mechanicalButtonStartState;
         });
 

@@ -147,13 +147,6 @@ void ForceController::initialize()
     m_gpioOutputs.setGreenLedState(false);
     m_gpioOutputs.setWhiteLedState(false);
 
-    // TODO: Remove
-    // emit m_uiConnector->showCalibrationPopup(false);
-    // m_ready = true;
-    // executeMeasure();
-    // return;
-    // TODO: Remove
-
     qDebug() << "Checking door";
     if (!m_gpioInputs->getDoorState())
     {

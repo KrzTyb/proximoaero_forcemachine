@@ -5,11 +5,19 @@
 #include <QtConcurrent>
 
 #include <QFuture>
+#include <QElapsedTimer>
 namespace
 {
     constexpr auto STEP_INTERVAL_US = 500;
 
     constexpr auto STEPS_PER_MILIMETER = 67;
+}
+
+void wait(int32_t microseconds)
+{
+    static QElapsedTimer timer;
+    timer.start();
+    while(timer.nsecsElapsed() < (microseconds * 1000));
 }
 
 StepMotor::StepMotor(GPIOInputsStates inputStates, QObject *parent)
@@ -90,9 +98,11 @@ void StepMotorWorker::goUp()
     while (!m_gpioInputStates.upperLimiter && running)
     {
         m_pullPin.write(true);
-        QThread::usleep(STEP_INTERVAL_US);
+        // QThread::usleep(STEP_INTERVAL_US);
+        wait(STEP_INTERVAL_US);
         m_pullPin.write(false);
-        QThread::usleep(STEP_INTERVAL_US);
+        // QThread::usleep(STEP_INTERVAL_US);
+        wait(STEP_INTERVAL_US);
     }
     m_enPin.write(false);
     running = false;
@@ -107,9 +117,11 @@ void StepMotorWorker::goDown()
     while (!m_gpioInputStates.lowerLimiter && running)
     {
         m_pullPin.write(true);
-        QThread::usleep(STEP_INTERVAL_US);
+        // QThread::usleep(STEP_INTERVAL_US);
+        wait(STEP_INTERVAL_US);
         m_pullPin.write(false);
-        QThread::usleep(STEP_INTERVAL_US);
+        // QThread::usleep(STEP_INTERVAL_US);
+        wait(STEP_INTERVAL_US);
     }
     m_enPin.write(false);
     running = false;
@@ -142,9 +154,11 @@ void StepMotorWorker::go(Milimeters milimeters, StepDir dir)
         //     break;
         // }
         m_pullPin.write(true);
-        QThread::usleep(STEP_INTERVAL_US);
+        // QThread::usleep(STEP_INTERVAL_US);
+        wait(STEP_INTERVAL_US);
         m_pullPin.write(false);
-        QThread::usleep(STEP_INTERVAL_US);
+        // QThread::usleep(STEP_INTERVAL_US);
+        wait(STEP_INTERVAL_US);
         steps--;
     }
     m_enPin.write(false);
