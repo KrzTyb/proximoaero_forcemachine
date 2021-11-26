@@ -21,6 +21,12 @@ enum class GPIO_TYPE
     BOTH_EDGES // Listen event both edges
 };
 
+enum class OUTPUT_TYPE
+{
+    NORMAL,
+    OPEN_DRAIN
+};
+
 enum class GPIO_EVENT_TYPE
 {
     RISING_EDGE,
@@ -31,7 +37,7 @@ enum class GPIO_EVENT_TYPE
 class GPIO
 {
 public:
-    GPIO(uint8_t pinNumber, GPIO_TYPE type, bool defaultState = 0);
+    GPIO(uint8_t pinNumber, GPIO_TYPE type, bool defaultState = 0, OUTPUT_TYPE outType = OUTPUT_TYPE::NORMAL);
     ~GPIO();
 
     bool read();

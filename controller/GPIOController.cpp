@@ -14,13 +14,18 @@ constexpr auto REQUEST_CONSUMER = "ForceMachine";
 
 }
 
-GPIO::GPIO(uint8_t pinNumber, GPIO_TYPE type, bool defaultState)
+GPIO::GPIO(uint8_t pinNumber, GPIO_TYPE type, bool defaultState, OUTPUT_TYPE outType)
 {
     m_line = chip.get_line(pinNumber);
 
     m_lineRequest = ::gpiod::line_request{};
     m_lineRequest.consumer = REQUEST_CONSUMER;
     m_lineRequest.request_type = static_cast<int>(type);
+
+    if (outType == OUTPUT_TYPE::OPEN_DRAIN)
+    {
+        m_lineRequest.flags = ::gpiod::line_request::FLAG_OPEN_DRAIN;
+    }
 
     m_line.request(m_lineRequest, defaultState);
 }
@@ -58,7 +63,7 @@ GPIO_EVENT_TYPE GPIO::getEventType()
 
 #include <QThread>
 
-GPIO::GPIO(uint8_t pinNumber, GPIO_TYPE type, bool defaultState)
+GPIO::GPIO(uint8_t pinNumber, GPIO_TYPE type, bool defaultState, OUTPUT_TYPE outType)
 {
 
 }

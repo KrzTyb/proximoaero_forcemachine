@@ -45,9 +45,9 @@ signals:
 private:
     int64_t milimetersToSteps(Milimeters milimeters);
 
-    GPIO    m_pullPin {17, GPIO_TYPE::OUTPUT};
-    GPIO    m_dirPin {27, GPIO_TYPE::OUTPUT};
-    GPIO    m_enPin {22, GPIO_TYPE::OUTPUT, true};
+    GPIO    m_pullPin {17, GPIO_TYPE::OUTPUT, false, OUTPUT_TYPE::OPEN_DRAIN};
+    GPIO    m_dirPin {27, GPIO_TYPE::OUTPUT, false, OUTPUT_TYPE::OPEN_DRAIN};
+    GPIO    m_enPin {22, GPIO_TYPE::OUTPUT, true, OUTPUT_TYPE::OPEN_DRAIN};
 
     GPIOInputsStates    m_gpioInputStates;
 
