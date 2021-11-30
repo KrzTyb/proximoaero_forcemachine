@@ -13,10 +13,10 @@ GPIOInputs::GPIOInputs(QObject *parent)
     DoorListener *doorListener = new DoorListener();
     MechanicalStartButtonListener *startButtonListener = new MechanicalStartButtonListener();
 
-    m_lowerLimitState = lowerLimiterListener->getState();
-    m_upperLimitState = upperLimiterListener->getState();
-    m_doorState = doorListener->getState();
-    m_mechanicalButtonStartState = startButtonListener->getState();
+    m_lowerLimitState = !lowerLimiterListener->getState();
+    m_upperLimitState = !upperLimiterListener->getState();
+    m_doorState = !doorListener->getState();
+    m_mechanicalButtonStartState = !startButtonListener->getState();
 
     qDebug() << "Lower: " << m_lowerLimitState << " Upper: " << m_upperLimitState << " door: " << m_doorState << " startButton: " << m_mechanicalButtonStartState;
 
@@ -113,7 +113,7 @@ void LowerLimiterListener::startListen()
         if (status)
         {
             auto eventType = m_gpio.getEventType();
-            emit stateChanged(eventType == GPIO_EVENT_TYPE::RISING_EDGE);
+            emit stateChanged(eventType == GPIO_EVENT_TYPE::FALLING_EDGE);
         }
     }
 }
@@ -126,7 +126,7 @@ void UpperLimiterListener::startListen()
         if (status)
         {
             auto eventType = m_gpio.getEventType();
-            emit stateChanged(eventType == GPIO_EVENT_TYPE::RISING_EDGE);
+            emit stateChanged(eventType == GPIO_EVENT_TYPE::FALLING_EDGE);
         }
     }
 }
@@ -139,7 +139,7 @@ void DoorListener::startListen()
         if (status)
         {
             auto eventType = m_gpio.getEventType();
-            emit stateChanged(eventType == GPIO_EVENT_TYPE::RISING_EDGE);
+            emit stateChanged(eventType == GPIO_EVENT_TYPE::FALLING_EDGE);
         }
     }
 }
@@ -152,7 +152,7 @@ void MechanicalStartButtonListener::startListen()
         if (status)
         {
             auto eventType = m_gpio.getEventType();
-            emit stateChanged(eventType == GPIO_EVENT_TYPE::RISING_EDGE);
+            emit stateChanged(eventType == GPIO_EVENT_TYPE::FALLING_EDGE);
         }
     }
 }

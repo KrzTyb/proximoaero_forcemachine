@@ -13,6 +13,15 @@
 
 #include <zmq.hpp>
 
+
+struct ActualLEDStates
+{
+    bool WHITE = false;
+    bool RED = false;
+    bool GREEN = false;
+    bool BLUE = false;
+};
+
 class ForceController : public QObject
 {
     Q_OBJECT
@@ -72,4 +81,6 @@ private:
     bool        m_ready {false};
 
     bool        m_doorPopupPossible {false};
+
+    ActualLEDStates m_ledStates;
 };

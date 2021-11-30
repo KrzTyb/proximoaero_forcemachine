@@ -4,7 +4,6 @@
 
 #include <QtConcurrent>
 
-#include <QFuture>
 #include <QElapsedTimer>
 namespace
 {
@@ -26,7 +25,9 @@ StepMotor::StepMotor(GPIOInputsStates inputStates, QObject *parent)
 {
     qRegisterMetaType<StepDir>();
 
-    connect(&m_goWatcher, &QFutureWatcher<void>::finished, this, &StepMotor::goFinished);
+    connect(this, &StepMotor::lowerLimitStateChanged, &m_motorWorker, &StepMotorWorker::lowerLimitStateChanged);
+    connect(this, &StepMotor::upperLimitStateChanged, &m_motorWorker, &StepMotorWorker::upperLimitStateChanged);
+    connect(this, &StepMotor::doorStateChanged, &m_motorWorker, &StepMotorWorker::doorStateChanged);
 }
 
 StepMotor::~StepMotor()
@@ -36,29 +37,58 @@ StepMotor::~StepMotor()
 
 void StepMotor::goUp()
 {
-    QtConcurrent::run([this](){m_motorWorker.goUp();});
+    stop();
+    m_UpThread = QThread::create([this](){m_motorWorker.goUp();});
+    if (m_UpThread)
+    {
+        m_UpThread->start();
+    }
 }
 
 void StepMotor::goDown()
 {
-    QtConcurrent::run([this](){m_motorWorker.goDown();});
+    stop();
+    m_DownThread = QThread::create([this](){m_motorWorker.goDown();});
+    if (m_DownThread)
+    {
+        m_DownThread->start();
+    }
 }
 
 void StepMotor::go(Milimeters milimeters, StepDir dir)
 {
-    QFuture<void> future = QtConcurrent::run(
+    stop();
+    m_goThread = QThread::create(
         [this](Milimeters milimeters, StepDir dir)
         {
 
             m_motorWorker.go(milimeters, dir);
 
         }, milimeters, dir);
-    m_goWatcher.setFuture(future);
+    if (m_goThread)
+    {
+        connect(m_goThread, &QThread::finished, this, &StepMotor::goFinished);
+        m_goThread->start();
+    }
 }
 
 void StepMotor::stop()
 {
-    QtConcurrent::run([this](){m_motorWorker.stop();});
+    if (m_UpThread && m_UpThread->isRunning())
+    {
+        qDebug() << "Up suspend";
+        m_UpThread->quit();
+    }
+    if (m_DownThread && m_DownThread->isRunning())
+    {
+        qDebug() << "Down suspend";
+        m_DownThread->quit();
+    }
+    if (m_goThread && m_goThread->isRunning())
+    {
+        qDebug() << "go suspend";
+        m_goThread->quit();
+    }
 }
 
 
@@ -92,10 +122,9 @@ void StepMotorWorker::doorStateChanged(bool state)
 void StepMotorWorker::goUp()
 {
     qDebug() << "Go Up";
-    running = true;
     m_enPin.write(true);
     m_dirPin.write(true);
-    while (!m_gpioInputStates.upperLimiter && running)
+    while (!m_gpioInputStates.upperLimiter)
     {
         if(!m_gpioInputStates.door)
         {
@@ -103,23 +132,19 @@ void StepMotorWorker::goUp()
             continue;
         }
         m_pullPin.write(true);
-        // QThread::usleep(STEP_INTERVAL_US);
         wait(STEP_INTERVAL_US);
         m_pullPin.write(false);
-        // QThread::usleep(STEP_INTERVAL_US);
         wait(STEP_INTERVAL_US);
     }
     m_enPin.write(false);
-    running = false;
 }
 
 void StepMotorWorker::goDown()
 {
     qDebug() << "Go Down";
-    running = true;
     m_enPin.write(true);
     m_dirPin.write(false);
-    while (!m_gpioInputStates.lowerLimiter && running)
+    while (!m_gpioInputStates.lowerLimiter)
     {
         if(!m_gpioInputStates.door)
         {
@@ -127,21 +152,17 @@ void StepMotorWorker::goDown()
             continue;
         }
         m_pullPin.write(true);
-        // QThread::usleep(STEP_INTERVAL_US);
         wait(STEP_INTERVAL_US);
         m_pullPin.write(false);
-        // QThread::usleep(STEP_INTERVAL_US);
         wait(STEP_INTERVAL_US);
     }
     m_enPin.write(false);
-    running = false;
 }
 
 void StepMotorWorker::go(Milimeters milimeters, StepDir dir)
 {
     QString dirString { dir == StepDir::Up ? "Up" : "Down"};
     qDebug() << "Go " << dirString << ", " << milimeters << " milimeters";
-    running = true;
     auto steps = milimetersToSteps(milimeters);
     qDebug() << "Steps: " << steps;
     m_enPin.write(true);
@@ -153,31 +174,24 @@ void StepMotorWorker::go(Milimeters milimeters, StepDir dir)
     {
         m_dirPin.write(false);
     }
-    while (steps && running)
+    while (steps)
     {
-        // if ((dir == StepDir::Down) && m_gpioInputStates.lowerLimiter)
-        // {
-        //     break;
-        // }
-        // else if ((dir == StepDir::Up) && m_gpioInputStates.upperLimiter)
-        // {
-        //     break;
-        // }
+        if ((dir == StepDir::Up) && m_gpioInputStates.upperLimiter)
+        {
+            break;
+        }
         if(!m_gpioInputStates.door)
         {
             QThread::msleep(500);
             continue;
         }
         m_pullPin.write(true);
-        // QThread::usleep(STEP_INTERVAL_US);
         wait(STEP_INTERVAL_US);
         m_pullPin.write(false);
-        // QThread::usleep(STEP_INTERVAL_US);
         wait(STEP_INTERVAL_US);
         steps--;
     }
     m_enPin.write(false);
-    running = false;
     qDebug() << "Go on position finished";
     emit goFinished();
 }
@@ -189,5 +203,5 @@ void StepMotorWorker::stop()
 
 int64_t StepMotorWorker::milimetersToSteps(Milimeters milimeters)
 {
-    return milimeters * STEPS_PER_MILIMETER;
+    return static_cast<int64_t>((milimeters * STEPS_PER_MILIMETER) / 2.0);
 }

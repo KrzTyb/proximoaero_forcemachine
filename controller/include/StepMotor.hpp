@@ -4,7 +4,7 @@
 #include <QThread>
 
 #include "GPIOController.hpp"
-#include <QFutureWatcher>
+#include <QThread>
 
 struct GPIOInputsStates
 {
@@ -75,5 +75,8 @@ signals:
 private:
     QThread stepMotorThread;
     StepMotorWorker m_motorWorker;
-    QFutureWatcher<void> m_goWatcher;
+
+    QThread*     m_UpThread;
+    QThread*     m_DownThread;
+    QThread*     m_goThread;
 };

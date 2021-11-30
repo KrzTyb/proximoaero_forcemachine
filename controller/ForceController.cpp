@@ -56,6 +56,22 @@ ForceController::ForceController(QSharedPointer<BackendConnector> uiConnector,
         {
             emit m_uiConnector->showDoorPopup(false);
         }
+
+        if (closed)
+        {
+            m_gpioOutputs.setRedLedState(m_ledStates.RED);
+            m_gpioOutputs.setBlueLedState(m_ledStates.BLUE);
+            m_gpioOutputs.setGreenLedState(m_ledStates.GREEN);
+            m_gpioOutputs.setWhiteLedState(m_ledStates.WHITE);
+        }
+        else
+        {
+            m_gpioOutputs.setRedLedState(true);
+            m_gpioOutputs.setBlueLedState(false);
+            m_gpioOutputs.setGreenLedState(false);
+            m_gpioOutputs.setWhiteLedState(false);            
+        }
+
     });
     
     emit m_gpioInputs->startLowerLimitListen();
@@ -143,9 +159,13 @@ void ForceController::initialize()
     m_gpioOutputs.setSupportingElectromagnetState(false);
     m_gpioOutputs.setBoltState(false);
     m_gpioOutputs.setRedLedState(false);
+    m_ledStates.RED = false;
     m_gpioOutputs.setBlueLedState(false);
+    m_ledStates.BLUE = false;
     m_gpioOutputs.setGreenLedState(false);
+    m_ledStates.GREEN = false;
     m_gpioOutputs.setWhiteLedState(false);
+    m_ledStates.WHITE = false;
 
     qDebug() << "Checking door";
     if (!m_gpioInputs->getDoorState())
@@ -153,6 +173,7 @@ void ForceController::initialize()
         qDebug() << "Door opened, waiting for close";
         emit m_uiConnector->showDoorPopup(true);
         m_gpioOutputs.setRedLedState(true);
+        m_ledStates.RED = true;
 
         QObject *obj = new QObject(this);
         connect(m_gpioInputs.get(), &GPIOInputs::doorStateChanged, obj,
@@ -188,9 +209,13 @@ void ForceController::calibration()
 
     qDebug() << "Calibration started";
     m_gpioOutputs.setRedLedState(true);
+    m_ledStates.RED = true;
     m_gpioOutputs.setBlueLedState(true);
+    m_ledStates.BLUE = true;
     m_gpioOutputs.setGreenLedState(true);
+    m_ledStates.GREEN = true;
     m_gpioOutputs.setWhiteLedState(true);
+    m_ledStates.WHITE = true;
     emit m_uiConnector->showCalibrationPopup(true);
 
     if (!m_gpioInputs->getLowerLimitState())
@@ -200,7 +225,7 @@ void ForceController::calibration()
     else
     {
         m_gpioOutputs.setSupportingElectromagnetState(true);
-        QTimer::singleShot(500, this, [this](){goUp();});
+        QTimer::singleShot(1000, this, [this](){goUp();});
     }
 }
 
@@ -219,7 +244,7 @@ void ForceController::goDown()
     if (m_gpioInputs->getLowerLimitState())
     {
         m_gpioOutputs.setBoltState(true);
-        QTimer::singleShot(500, this, [this]()
+        QTimer::singleShot(1000, this, [this]()
         {
             m_gpioOutputs.setSupportingElectromagnetState(true);
 
@@ -227,7 +252,7 @@ void ForceController::goDown()
                 [this]()
                 {
                     m_gpioOutputs.setBoltState(false);
-                    QTimer::singleShot(500, this, [this](){goUp();});
+                    QTimer::singleShot(1000, this, [this](){goUp();});
                 } 
             );
         });
@@ -248,13 +273,13 @@ void ForceController::goDown()
                     [this]()
                     {
                         m_gpioOutputs.setBoltState(false);
-                        QTimer::singleShot(500, this, [this](){goUp();});
+                        QTimer::singleShot(1000, this, [this](){goUp();});
                     } 
                 );
             }
         });
         m_gpioOutputs.setBoltState(true);
-        QTimer::singleShot(500, this, [this](){m_stepMotor.goDown();});
+        QTimer::singleShot(1000, this, [this](){m_stepMotor.goDown();});
     }
 }
 
@@ -314,16 +339,20 @@ void ForceController::goHalfMeterFromUp()
     {
         obj->deleteLater();
         m_gpioOutputs.setRedLedState(false);
+        m_ledStates.RED = false;
         m_gpioOutputs.setBlueLedState(true);
+        m_ledStates.BLUE = true;
         m_gpioOutputs.setGreenLedState(false);
+        m_ledStates.GREEN = false;
         m_gpioOutputs.setWhiteLedState(true);
+        m_ledStates.WHITE = true;
         qDebug() << "Calibration finished";
         emit m_uiConnector->showCalibrationPopup(false);
         m_ready = true;
         m_doorPopupPossible = false;
     });
 
-    m_stepMotor.go(500, StepDir::Down);
+    m_stepMotor.go(1000, StepDir::Down);
 }
 
 void ForceController::startMeasure()
@@ -378,9 +407,13 @@ void ForceController::goToPosition(int heightMilimeters)
     {
         obj->deleteLater();
         m_gpioOutputs.setRedLedState(false);
+        m_ledStates.RED = false;
         m_gpioOutputs.setBlueLedState(false);
+        m_ledStates.BLUE = false;
         m_gpioOutputs.setGreenLedState(true);
+        m_ledStates.GREEN = true;
         m_gpioOutputs.setWhiteLedState(false);
+        m_ledStates.WHITE = false;
 
         m_gpioOutputs.setBoltState(true);
 
@@ -394,7 +427,7 @@ void ForceController::goToPosition(int heightMilimeters)
             [this, execMeasureObj](auto state)
             {
                 qDebug() << "Mechanical start button clicked";
-                if (state)
+                if (state && m_gpioInputs->getDoorState())
                 {
                     execMeasureObj->deleteLater();
                     emit m_uiConnector->setStartPopupState(false);
@@ -469,9 +502,13 @@ void ForceController::presentation()
 void ForceController::prepareToReady()
 {
     m_gpioOutputs.setRedLedState(true);
+    m_ledStates.RED = true;
     m_gpioOutputs.setBlueLedState(true);
+    m_ledStates.BLUE = true;
     m_gpioOutputs.setGreenLedState(true);
+    m_ledStates.GREEN = true;
     m_gpioOutputs.setWhiteLedState(true);
+    m_ledStates.WHITE = true;
     m_gpioOutputs.setBoltState(true);
     emit m_uiConnector->setWaitPopupState(true);
 
@@ -487,19 +524,23 @@ void ForceController::prepareToReady()
             m_gpioOutputs.setSupportingElectromagnetState(true);
             m_gpioOutputs.setBoltState(false);
 
-            QTimer::singleShot(500, this, [this]()
+            QTimer::singleShot(1000, this, [this]()
             {
                 m_gpioOutputs.setRedLedState(false);
+                m_ledStates.RED = false;
                 m_gpioOutputs.setBlueLedState(true);
+                m_ledStates.BLUE = true;
                 m_gpioOutputs.setGreenLedState(false);
+                m_ledStates.GREEN = false;
                 m_gpioOutputs.setWhiteLedState(true);
+                m_ledStates.WHITE = true;
                 goHalfMeterFromDown();
             });
         }
     });
 
 
-    QTimer::singleShot(500, this, [this](){m_stepMotor.goDown();});
+    QTimer::singleShot(1000, this, [this](){m_stepMotor.goDown();});
 }
 
 void ForceController::goHalfMeterFromDown()
@@ -515,5 +556,5 @@ void ForceController::goHalfMeterFromDown()
         startMeasure();
     });
 
-    m_stepMotor.go(500, StepDir::Up);
+    m_stepMotor.go(1000, StepDir::Up);
 }

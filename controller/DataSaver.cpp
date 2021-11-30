@@ -67,6 +67,29 @@ void DataSaver::onMeasureReceived(MeasureStatus status, MeasureListPtr measureme
         m_measures = nullptr;
     }
 
+    if (m_measures == nullptr)
+    {
+        qDebug() << "Measure received. Saved to file";
+        QString filename {"/tmp/measure.csv"};
+
+        QFile data(filename);
+        if(data.open(QFile::WriteOnly | QFile::Truncate))
+        {
+            QTextStream output(&data);
+            // Header
+            output << "Siła [N]" << "\t" << "Przemieszczenie [mm]" << "\n";
+
+            // Data
+            for (const auto& measureElement : *m_measures)
+            {
+                output << measureElement.y() << "\t" << measureElement.x() << "\n";
+                qDebug() << "y: " << measureElement.y() << " x: " << measureElement.x();
+            }
+
+            data.close();
+        }
+    }
+
     emit captureFinished();
 
     if (m_usbHandler->isDiskAvailable() && m_measures)
@@ -100,24 +123,6 @@ void DataSaver::onExportClicked()
     if (!m_usbHandler->isDiskAvailable())
     {
         return;
-    }
-
-    QString filename {"/tmp/measure.csv"};
-
-    QFile data(filename);
-    if(data.open(QFile::WriteOnly | QFile::Truncate))
-    {
-        QTextStream output(&data);
-        // Header
-        output << "Siła [N]" << "\t" << "Przemieszczenie [mm]" << "\n";
-
-        // Data
-        for (const auto& measureElement : *m_measures)
-        {
-            output << measureElement.y() << "\t" << measureElement.x() << "\n";
-        }
-
-        data.close();
     }
 
     QProcess syncProcess;
