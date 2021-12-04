@@ -132,24 +132,12 @@ void DataSaver::onExportClicked()
     syncProcess.waitForFinished();
     syncProcess.start("mount " + m_usbHandler->getDiskInfo().path + " /mnt/usb");
     syncProcess.waitForFinished();
-    qDebug() << "Mount status:";
-    qDebug() << syncProcess.readAllStandardError();
-    qDebug() << syncProcess.readAllStandardOutput();
     syncProcess.start("cp /tmp/measure.csv /mnt/usb/pomiar.csv");
     syncProcess.waitForFinished();
-    qDebug() << "cp measure status:";
-    qDebug() << syncProcess.readAllStandardError();
-    qDebug() << syncProcess.readAllStandardOutput();
     syncProcess.start("cp /tmp/camera.mp4 /mnt/usb/wideo.mp4");
     syncProcess.waitForFinished();
-    qDebug() << "cp video status:";
-    qDebug() << syncProcess.readAllStandardError();
-    qDebug() << syncProcess.readAllStandardOutput();
     syncProcess.start("umount /mnt/usb");
     syncProcess.waitForFinished();
-    qDebug() << "Umount status:";
-    qDebug() << syncProcess.readAllStandardError();
-    qDebug() << syncProcess.readAllStandardOutput();
 
 }
 
