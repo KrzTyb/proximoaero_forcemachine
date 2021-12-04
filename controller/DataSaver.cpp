@@ -67,7 +67,7 @@ void DataSaver::onMeasureReceived(MeasureStatus status, MeasureListPtr measureme
         m_measures = nullptr;
     }
 
-    if (m_measures == nullptr)
+    if (m_measures)
     {
         qDebug() << "Measure received. Saved to file";
         QString filename {"/tmp/measure.csv"};
@@ -76,6 +76,8 @@ void DataSaver::onMeasureReceived(MeasureStatus status, MeasureListPtr measureme
         if(data.open(QFile::WriteOnly | QFile::Truncate))
         {
             QTextStream output(&data);
+            // Scale
+            output << "Waga: " << m_scale << "kg" << "\n";
             // Header
             output << "Siła [N]" << "\t" << "Przemieszczenie [mm]" << "\n";
 
@@ -83,7 +85,6 @@ void DataSaver::onMeasureReceived(MeasureStatus status, MeasureListPtr measureme
             for (const auto& measureElement : *m_measures)
             {
                 output << measureElement.y() << "\t" << measureElement.x() << "\n";
-                qDebug() << "y: " << measureElement.y() << " x: " << measureElement.x();
             }
 
             data.close();
@@ -100,7 +101,7 @@ void DataSaver::onMeasureReceived(MeasureStatus status, MeasureListPtr measureme
     {
         emit m_uiConnector->blockExportClick(true);
     }
-    emit m_uiConnector->blockExportClick(false); // TODO: Remove
+    // emit m_uiConnector->blockExportClick(false); // TODO: Remove
 }
 
 void DataSaver::startRecording()
@@ -127,13 +128,36 @@ void DataSaver::onExportClicked()
 
     QProcess syncProcess;
 
+    syncProcess.start("mkdir /mnt/usb");
+    syncProcess.waitForFinished();
     syncProcess.start("mount " + m_usbHandler->getDiskInfo().path + " /mnt/usb");
     syncProcess.waitForFinished();
+    qDebug() << "Mount status:";
+    qDebug() << syncProcess.readAllStandardError();
+    qDebug() << syncProcess.readAllStandardOutput();
     syncProcess.start("cp /tmp/measure.csv /mnt/usb/pomiar.csv");
     syncProcess.waitForFinished();
+    qDebug() << "cp measure status:";
+    qDebug() << syncProcess.readAllStandardError();
+    qDebug() << syncProcess.readAllStandardOutput();
     syncProcess.start("cp /tmp/camera.mp4 /mnt/usb/wideo.mp4");
     syncProcess.waitForFinished();
+    qDebug() << "cp video status:";
+    qDebug() << syncProcess.readAllStandardError();
+    qDebug() << syncProcess.readAllStandardOutput();
     syncProcess.start("umount /mnt/usb");
     syncProcess.waitForFinished();
+    qDebug() << "Umount status:";
+    qDebug() << syncProcess.readAllStandardError();
+    qDebug() << syncProcess.readAllStandardOutput();
 
+}
+
+void DataSaver::scaleChanged(QString scale)
+{
+    m_scale = scale;
+    if (m_scale.isNull())
+    {
+        m_scale = "0";
+    }
 }

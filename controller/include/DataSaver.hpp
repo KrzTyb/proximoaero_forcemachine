@@ -38,6 +38,8 @@ public slots:
 
     void onExportClicked();
 
+    void scaleChanged(QString scale);
+
 signals:
     void captureFinished();
 
@@ -55,5 +57,7 @@ private:
     QMediaCaptureSession m_captureSession;
     QScopedPointer<QCamera> m_camera;
     QScopedPointer<QMediaRecorder> m_mediaRecorder;
+
+    QString m_scale;
 
 };

@@ -8,6 +8,8 @@
 #include <QProcess>
 #include <QPointer>
 
+#include "config.h"
+
 
 USBDeviceHandler::USBDeviceHandler(QObject *parent) : QObject(parent)
 {
@@ -16,7 +18,11 @@ USBDeviceHandler::USBDeviceHandler(QObject *parent) : QObject(parent)
     usbWatcher->addPath("/dev/disk/by-label");
 
     QPointer<QProcess> checkDiskProc = new QProcess();
+    #if BUILD_ARM == 1
     checkDiskProc->start("blkid");
+    #else
+    checkDiskProc->start("blkid");
+    #endif
     checkDiskProc->waitForFinished();
 
     QString output(checkDiskProc->readAllStandardOutput());
@@ -85,7 +91,6 @@ void USBDeviceHandler::onDirectoryContentChanged(QString path)
             usbStorageList.append({path, name});
         }
     }
-
     if(usbStorageList.size() > 0)
     {
         currentUSBDisk = usbStorageList.at(0);

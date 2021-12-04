@@ -21,8 +21,9 @@ signals:
     void stateChanged(bool state);
 
 private:
-    bool getState() { return m_gpio.read(); }
+    bool getState() { return m_actualState; }
     GPIO m_gpio {5, GPIO_TYPE::BOTH_EDGES};
+    bool m_actualState;
 };
 
 class UpperLimiterListener : public QObject
@@ -39,9 +40,10 @@ signals:
     void stateChanged(bool state);
 
 private:
-    bool getState() { return m_gpio.read(); }
+    bool getState() { return m_actualState; }
 
     GPIO m_gpio {12, GPIO_TYPE::BOTH_EDGES};
+    bool m_actualState;
 };
 
 class DoorListener : public QObject
@@ -58,9 +60,10 @@ signals:
     void stateChanged(bool state);
 
 private:
-    bool getState() { return m_gpio.read(); }
+    bool getState() { return m_actualState; }
 
     GPIO m_gpio {19, GPIO_TYPE::BOTH_EDGES};
+    bool m_actualState;
 };
 
 class MechanicalStartButtonListener : public QObject
@@ -77,9 +80,10 @@ signals:
     void stateChanged(bool state);
 
 private:
-    bool getState() { return m_gpio.read(); }
+    bool getState() { return m_actualState; }
 
     GPIO m_gpio {26, GPIO_TYPE::BOTH_EDGES};
+    bool m_actualState;
 };
 
 class GPIOInputs : public QObject

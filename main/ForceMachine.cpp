@@ -39,6 +39,8 @@ int main(int argc, char *argv[])
     QSharedPointer<GPIOInputs> gpioInputs = QSharedPointer<GPIOInputs>::create();
     QPointer<ForceController> forceController = new ForceController(uiConnector, measureController, dataSaver, gpioInputs);
 
+    QObject::connect(uiConnector.get(), &BackendConnector::scaleChanged, dataSaver.get(), &DataSaver::scaleChanged);
+
     QThread::sleep(1);
 
     QQmlApplicationEngine engine;

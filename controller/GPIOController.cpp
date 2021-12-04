@@ -74,7 +74,7 @@ GPIO::~GPIO()
 
 bool GPIO::read()
 {
-    return false;
+    return true; // LOW is true!!!
 }
 
 void GPIO::write(bool state)

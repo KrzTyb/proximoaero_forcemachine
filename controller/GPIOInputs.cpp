@@ -13,10 +13,10 @@ GPIOInputs::GPIOInputs(QObject *parent)
     DoorListener *doorListener = new DoorListener();
     MechanicalStartButtonListener *startButtonListener = new MechanicalStartButtonListener();
 
-    m_lowerLimitState = !lowerLimiterListener->getState();
-    m_upperLimitState = !upperLimiterListener->getState();
-    m_doorState = !doorListener->getState();
-    m_mechanicalButtonStartState = !startButtonListener->getState();
+    m_lowerLimitState = lowerLimiterListener->getState();
+    m_upperLimitState = upperLimiterListener->getState();
+    m_doorState = doorListener->getState();
+    m_mechanicalButtonStartState = startButtonListener->getState();
 
     qDebug() << "Lower: " << m_lowerLimitState << " Upper: " << m_upperLimitState << " door: " << m_doorState << " startButton: " << m_mechanicalButtonStartState;
 
@@ -88,21 +88,25 @@ GPIOInputs::~GPIOInputs()
 LowerLimiterListener::LowerLimiterListener(QObject *parent)
     : QObject(parent)
 {
+    m_actualState = !m_gpio.read();
 }
 
 UpperLimiterListener::UpperLimiterListener(QObject *parent)
     : QObject(parent)
 {
+    m_actualState = !m_gpio.read();
 }
 
 DoorListener::DoorListener(QObject *parent)
     : QObject(parent)
 {
+    m_actualState = !m_gpio.read();
 }
 
 MechanicalStartButtonListener::MechanicalStartButtonListener(QObject *parent)
     : QObject(parent)
 {
+    m_actualState = !m_gpio.read();
 }
 
 void LowerLimiterListener::startListen()
@@ -113,7 +117,12 @@ void LowerLimiterListener::startListen()
         if (status)
         {
             auto eventType = m_gpio.getEventType();
-            emit stateChanged(eventType == GPIO_EVENT_TYPE::FALLING_EDGE);
+            auto newState = eventType == GPIO_EVENT_TYPE::FALLING_EDGE;
+            if (newState != m_actualState)
+            {
+                m_actualState = newState;
+                emit stateChanged(m_actualState);
+            }
         }
     }
 }
@@ -126,7 +135,12 @@ void UpperLimiterListener::startListen()
         if (status)
         {
             auto eventType = m_gpio.getEventType();
-            emit stateChanged(eventType == GPIO_EVENT_TYPE::FALLING_EDGE);
+            auto newState = eventType == GPIO_EVENT_TYPE::FALLING_EDGE;
+            if (newState != m_actualState)
+            {
+                m_actualState = newState;
+                emit stateChanged(m_actualState);
+            }
         }
     }
 }
@@ -139,7 +153,12 @@ void DoorListener::startListen()
         if (status)
         {
             auto eventType = m_gpio.getEventType();
-            emit stateChanged(eventType == GPIO_EVENT_TYPE::FALLING_EDGE);
+            auto newState = eventType == GPIO_EVENT_TYPE::FALLING_EDGE;
+            if (newState != m_actualState)
+            {
+                m_actualState = newState;
+                emit stateChanged(m_actualState);
+            }
         }
     }
 }
@@ -152,7 +171,12 @@ void MechanicalStartButtonListener::startListen()
         if (status)
         {
             auto eventType = m_gpio.getEventType();
-            emit stateChanged(eventType == GPIO_EVENT_TYPE::FALLING_EDGE);
+            auto newState = eventType == GPIO_EVENT_TYPE::FALLING_EDGE;
+            if (newState != m_actualState)
+            {
+                m_actualState = newState;
+                emit stateChanged(m_actualState);
+            }
         }
     }
 }

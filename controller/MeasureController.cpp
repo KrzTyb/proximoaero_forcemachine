@@ -7,6 +7,10 @@
 #include "config.h"
 #include <cstdlib>
 
+#include <vector>
+#include <cmath>
+#include <cstdlib>
+
 constexpr int RECEIVE_TIMEOUT = 10000;
 
 constexpr double FORCE_CONVERT_VALUE = 2000.0 / 9.0;
@@ -41,6 +45,8 @@ MeasureController::MeasureController(QObject *parent)
     connect(&workerThread, &QThread::finished, measureWorker, &QObject::deleteLater);
     connect(this, &MeasureController::startMeasure, measureWorker, &MeasureWorker::startMeasure);
     connect(measureWorker, &MeasureWorker::measureReady, this, &MeasureController::measurementsReceived);
+    connect(this, &MeasureController::setScaleKg, measureWorker, &MeasureWorker::setScaleKg);
+    connect(this, &MeasureController::setHeightMeters, measureWorker, &MeasureWorker::setHeightMeters);
     workerThread.start();
 }
 
@@ -78,7 +84,7 @@ void MeasureWorker::receiveMeasure()
 
 void MeasureWorker::unpackMeasureAndSend(const QJsonArray &jsonMeasurements)
 {
-    auto measureListPtr = MeasureListPtr{ new MeasureList{} };
+    auto rawMeasureList = std::vector<double>{};
 
     bool initialCalculation = false;
     double initialVoltage = 0.0;
@@ -89,19 +95,25 @@ void MeasureWorker::unpackMeasureAndSend(const QJsonArray &jsonMeasurements)
         auto jsonObject = arrayElement.toObject();
 
         double voltage = jsonObject["voltage"].toDouble();
-        double current = jsonObject["current"].toDouble();
-        if (!initialCalculation)
-        {
-            measureListPtr->append({voltageToForce(voltage), calculateDisplacement(0.0, voltage, 0.0, current)});
-            initialVoltage = voltage;
-            initialCurrent = current;
-            initialCalculation = true;
-        }
-        else
-        {
-            measureListPtr->append({voltageToForce(voltage), calculateDisplacement(initialVoltage, voltage, initialCurrent, current)});
-        }
+        // double current = jsonObject["current"].toDouble();
+        // if (!initialCalculation)
+        // {
+        //     // measureListPtr->append({voltageToForce(voltage), current});
+        //     rawMeasureListPtr->append({voltage, current});
+        //     initialVoltage = voltage;
+        //     initialCurrent = current;
+        //     initialCalculation = true;
+        // }
+        // else
+        // {
+        //     // measureListPtr->append({voltageToForce(voltage), current});
+        //     rawMeasureListPtr->append({voltage, current});
+        // }
+        rawMeasureList.push_back(voltage);
+        qDebug() << "Voltage: " << voltage;
     }
+
+    auto measureListPtr = calculateMeasurement(rawMeasureList);
 
     emit measureReady(MeasureStatus::Ok, measureListPtr);
 }
@@ -121,6 +133,53 @@ double MeasureWorker::calculateDisplacement(double initialVoltage, double voltag
     {
         return 0.0;
     }
+}
+
+std::vector<double> integration(const std::vector<double> &values)
+{
+    double integral = 0.0;
+
+    auto results = std::vector<double>{};
+
+    for (const auto &value : values)
+    {
+        integral += value * DT;
+        results.push_back(integral);
+    }
+    return std::move(results);
+}
+
+MeasureListPtr MeasureWorker::calculateMeasurement(const std::vector<double> &rawMeasurements)
+{
+    auto measureListPtr = MeasureListPtr{ new MeasureList{} };
+
+    auto integrationFirst = integration(rawMeasurements);
+    for (auto &value : integrationFirst)
+    {
+        value = std::abs(value);
+    }
+    const auto integrationResults = integration(integrationFirst);
+
+    int i = 0;
+    double time = 0.0;
+    for (const auto &value : integrationResults)
+    {
+        MeasureElement element;
+        element.setX(calculateDisplacementNew(value, time));
+        element.setY(voltageToForce(rawMeasurements.at(i)));
+        measureListPtr->append(element);
+        time += DT;
+        i++;
+    }
+
+    return measureListPtr;
+}
+
+double MeasureWorker::calculateDisplacementNew(double value, double timeSec)
+{
+    constexpr double G = 9.81;
+
+    return std::abs(G * std::sqrt((2.0 * m_heightMeters) / G) * timeSec - (value / (6.0 + m_scaleKg) + ((G*(timeSec*timeSec))/2.0)));
 }
 
 #if BUILD_ARM == 1

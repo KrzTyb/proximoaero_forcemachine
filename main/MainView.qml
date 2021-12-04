@@ -58,7 +58,7 @@ Item {
             id: numericKeyboard
             x: 0
             y: 330
-            visible: false
+            visible: true
 
             onKeyClicked: function onKeyClicked(key)
             {
@@ -194,12 +194,6 @@ Item {
         }
     }
 
-    DoorPopup
-    {
-        id: doorPopup
-        visible: false
-    }
-
     CalibrationPopup
     {
         id: calibPopup
@@ -215,6 +209,12 @@ Item {
     MeasurePopup
     {
         id: measurePopup
+        visible: false
+    }
+
+    DoorPopup
+    {
+        id: doorPopup
         visible: false
     }
 

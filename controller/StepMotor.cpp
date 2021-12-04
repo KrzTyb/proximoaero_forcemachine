@@ -2,8 +2,6 @@
 
 #include <QDebug>
 
-#include <QtConcurrent>
-
 #include <QElapsedTimer>
 namespace
 {
@@ -78,16 +76,19 @@ void StepMotor::stop()
     {
         qDebug() << "Up suspend";
         m_UpThread->quit();
+        m_UpThread = nullptr;
     }
     if (m_DownThread && m_DownThread->isRunning())
     {
         qDebug() << "Down suspend";
         m_DownThread->quit();
+        m_DownThread = nullptr;
     }
     if (m_goThread && m_goThread->isRunning())
     {
         qDebug() << "go suspend";
         m_goThread->quit();
+        m_goThread = nullptr;
     }
 }
 

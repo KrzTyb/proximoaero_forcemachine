@@ -6,9 +6,6 @@
 
 #include <QTimer>
 
-constexpr uint32_t MEASURE_TIME_MS = 3000;
-constexpr uint32_t MEASURE_INTERVAL_MS = 10;
-
 
 ForceController::ForceController(QSharedPointer<BackendConnector> uiConnector,
     QSharedPointer<MeasureController> measureController,
@@ -111,11 +108,13 @@ void ForceController::connectUI()
         {
             m_scaleKg = scale.toDouble();
         }
+        emit m_measureController->setScaleKg(m_scaleKg);
     });
 }
 
 void ForceController::onStartClicked()
 {
+    m_doorPopupPossible = true;
     emit m_uiConnector->blockStartClick(true);
     startMeasure();
 }
@@ -145,17 +144,9 @@ void ForceController::hidePreview()
 
 void ForceController::initialize()
 {
-    m_doorPopupPossible = true;
-    if (!m_gpioInputs->getDoorState())
-    {
-        emit m_uiConnector->showDoorPopup(true);
-    }
-    else
-    {
-        emit m_uiConnector->showDoorPopup(false);
-    }
 
     qDebug() << "Initialize started";
+    m_doorPopupPossible = true;
     m_gpioOutputs.setSupportingElectromagnetState(false);
     m_gpioOutputs.setBoltState(false);
     m_gpioOutputs.setRedLedState(false);
@@ -166,6 +157,8 @@ void ForceController::initialize()
     m_ledStates.GREEN = false;
     m_gpioOutputs.setWhiteLedState(false);
     m_ledStates.WHITE = false;
+
+    // m_ready = true; return; // REMOVE THIS!
 
     qDebug() << "Checking door";
     if (!m_gpioInputs->getDoorState())
@@ -197,15 +190,6 @@ void ForceController::initialize()
 
 void ForceController::calibration()
 {
-    m_doorPopupPossible = true;
-    if (!m_gpioInputs->getDoorState())
-    {
-        emit m_uiConnector->showDoorPopup(true);
-    }
-    else
-    {
-        emit m_uiConnector->showDoorPopup(false);
-    }
 
     qDebug() << "Calibration started";
     m_gpioOutputs.setRedLedState(true);
@@ -231,15 +215,6 @@ void ForceController::calibration()
 
 void ForceController::goDown()
 {
-    m_doorPopupPossible = true;
-    if (!m_gpioInputs->getDoorState())
-    {
-        emit m_uiConnector->showDoorPopup(true);
-    }
-    else
-    {
-        emit m_uiConnector->showDoorPopup(false);
-    }
 
     if (m_gpioInputs->getLowerLimitState())
     {
@@ -285,15 +260,6 @@ void ForceController::goDown()
 
 void ForceController::goUp()
 {
-    m_doorPopupPossible = true;
-    if (!m_gpioInputs->getDoorState())
-    {
-        emit m_uiConnector->showDoorPopup(true);
-    }
-    else
-    {
-        emit m_uiConnector->showDoorPopup(false);
-    }
 
     if (m_gpioInputs->getUpperLimitState())
     {
@@ -321,15 +287,6 @@ void ForceController::goUp()
 
 void ForceController::goHalfMeterFromUp()
 {
-    m_doorPopupPossible = true;
-    if (!m_gpioInputs->getDoorState())
-    {
-        emit m_uiConnector->showDoorPopup(true);
-    }
-    else
-    {
-        emit m_uiConnector->showDoorPopup(false);
-    }
 
     qDebug() << "Go to 0.5m";
     QObject *obj = new QObject(this);
@@ -357,15 +314,6 @@ void ForceController::goHalfMeterFromUp()
 
 void ForceController::startMeasure()
 {
-    m_doorPopupPossible = true;
-    if (!m_gpioInputs->getDoorState())
-    {
-        emit m_uiConnector->showDoorPopup(true);
-    }
-    else
-    {
-        emit m_uiConnector->showDoorPopup(false);
-    }
 
     m_dataSaver->clearData();
     if (!m_ready)
@@ -375,7 +323,6 @@ void ForceController::startMeasure()
     }
     m_ready = false;
 
-    m_doorPopupPossible = false;
     emit m_uiConnector->showDoorPopup(false);
 
 
@@ -386,13 +333,14 @@ void ForceController::startMeasure()
     QObject *obj = new QObject(this);
 
     connect(m_uiConnector.get(), &BackendConnector::configEndClicked, obj,
-    [this, obj](auto height)
+    [this, obj](auto heightCM)
     {
+        emit m_measureController->setHeightMeters(heightCM / 100.0);
         obj->deleteLater();
         emit m_uiConnector->closeConfigPopup();
-        qDebug() << "Go - height: " << height << " cm";
+        qDebug() << "Go - height: " << heightCM << " cm";
         emit m_uiConnector->setWaitPopupState(true);
-        goToPosition(height * 10); // Convert from cm to mm
+        goToPosition(heightCM * 10); // Convert from cm to mm
     });
 
 }
@@ -480,8 +428,6 @@ void ForceController::executeMeasure()
 void ForceController::presentation()
 {
     m_doorPopupPossible = false;
-    emit m_uiConnector->showDoorPopup(false);
-
     auto measurements = m_dataSaver->getMeasurements();
 
     if (measurements)

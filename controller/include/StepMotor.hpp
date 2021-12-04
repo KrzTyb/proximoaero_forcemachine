@@ -76,7 +76,7 @@ private:
     QThread stepMotorThread;
     StepMotorWorker m_motorWorker;
 
-    QThread*     m_UpThread;
-    QThread*     m_DownThread;
-    QThread*     m_goThread;
+    QThread*     m_UpThread = nullptr;
+    QThread*     m_DownThread = nullptr;
+    QThread*     m_goThread = nullptr;
 };
