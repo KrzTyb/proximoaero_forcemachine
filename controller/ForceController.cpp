@@ -116,7 +116,7 @@ void ForceController::onStartClicked()
 {
     m_doorPopupPossible = true;
     emit m_uiConnector->blockStartClick(true);
-    startMeasure();
+    executeMeasure();
 }
 
 void ForceController::setCameraVisible()
@@ -158,33 +158,6 @@ void ForceController::initialize()
     m_gpioOutputs.setWhiteLedState(false);
     m_ledStates.WHITE = false;
 
-    // m_ready = true; return; // REMOVE THIS!
-
-    qDebug() << "Checking door";
-    if (!m_gpioInputs->getDoorState())
-    {
-        qDebug() << "Door opened, waiting for close";
-        emit m_uiConnector->showDoorPopup(true);
-        m_gpioOutputs.setRedLedState(true);
-        m_ledStates.RED = true;
-
-        QObject *obj = new QObject(this);
-        connect(m_gpioInputs.get(), &GPIOInputs::doorStateChanged, obj,
-        [this, obj](bool state)
-        {
-            if (state)
-            {
-                obj->deleteLater();
-                qDebug() << "Door closed";
-                emit m_uiConnector->showDoorPopup(false);
-                calibration();
-            }
-        });
-    }
-    else
-    {
-        calibration();
-    }
 }
 
 
