@@ -6,6 +6,8 @@
 
 #include <QTimer>
 
+constexpr const auto ContentPreviewWidthPixels = 618;
+
 
 ForceController::ForceController(QSharedPointer<BackendConnector> uiConnector,
     QSharedPointer<MeasureController> measureController,
@@ -108,7 +110,7 @@ void ForceController::connectUI()
         {
             m_scaleKg = scale.toDouble();
         }
-        emit m_measureController->setScaleKg(m_scaleKg);
+        m_measureController->setScaleKg(m_scaleKg);
     });
 }
 
@@ -127,7 +129,17 @@ void ForceController::setCameraVisible()
 
 void ForceController::setChartData(MeasureList measurements)
 {
-    emit m_uiConnector->measurementsReceived(std::move(measurements));
+    const auto samplesToRemove = static_cast<size_t>(std::floor(static_cast<float>(measurements.size()) / static_cast<float>(ContentPreviewWidthPixels)));
+    
+    MeasureList listForChart;
+    size_t i = 0;
+    while (i < measurements.size())
+    {
+        listForChart.emplace_back(measurements.at(i));
+        i += samplesToRemove;
+    }
+
+    emit m_uiConnector->measurementsReceived(std::move(listForChart));
 }
 
 void ForceController::setChartVisible()
@@ -308,7 +320,7 @@ void ForceController::startMeasure()
     connect(m_uiConnector.get(), &BackendConnector::configEndClicked, obj,
     [this, obj](auto heightCM)
     {
-        emit m_measureController->setHeightMeters(heightCM / 100.0);
+        m_measureController->setHeightMeters(heightCM / 100.0);
         obj->deleteLater();
         emit m_uiConnector->closeConfigPopup();
         qDebug() << "Go - height: " << heightCM << " cm";
@@ -393,7 +405,7 @@ void ForceController::executeMeasure()
 
     setCameraVisible();
     m_dataSaver->startCapture();
-    emit m_measureController->startMeasure(MEASURE_TIME_MS, MEASURE_INTERVAL_MS);
+    m_measureController->startMeasure(MEASURE_TIME_MS, MEASURE_INTERVAL_MS);
 
     m_gpioOutputs.setSupportingElectromagnetState(false);
 }
