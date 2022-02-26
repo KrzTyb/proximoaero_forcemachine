@@ -25,6 +25,21 @@ set(SOURCES
 
     include/DataSaver.hpp
     DataSaver.cpp
+    
+    measure/include/ITransport.hpp
+    measure/include/TransportDelegate.hpp
+
+    measure/src/UartBroker.hpp
+    measure/src/UartBroker.cpp
+
+    measure/include/TransportBuilder.hpp
+    measure/src/TransportBuilder.cpp
+
+    measure/include/MeasureBroker.hpp
+    measure/src/MeasureBroker.cpp
+    
+    include/MeasureCalculator.hpp
+    MeasureCalculator.cpp
 )
 
 add_library(${NAME} ${SOURCES})
@@ -32,6 +47,7 @@ add_library(${NAME} ${SOURCES})
 target_include_directories(${NAME}
     PUBLIC
         include
+        measure/include
 )
 
 target_link_libraries(${NAME}
@@ -41,6 +57,8 @@ target_link_libraries(${NAME}
         zmq
         Qt6::Multimedia
         Qt6::Concurrent
+    PRIVATE
+        Qt6::SerialPort
 )
 
 if(BUILD_ARM)

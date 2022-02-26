@@ -20,7 +20,7 @@ configure_file (
 
 include_directories("${PROJECT_BINARY_DIR}")
 
-find_package(Qt6 6.2 COMPONENTS Core Quick Multimedia Concurrent REQUIRED)
+find_package(Qt6 6.2 COMPONENTS Core Quick Multimedia Concurrent SerialPort REQUIRED)
 
 set(QT_QML_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/main)
 

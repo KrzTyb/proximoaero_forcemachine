@@ -48,7 +48,7 @@ BUILD_MAKE_TARGET="all"
 BUILD_DIR=${SRC_DIR}/build/${BUILD_TARGET_DIR}${BUILD_SUFFIX}
 
 if [ ${RECONFIGURE} = ON ] ; then
-    rm -rf ${BUILD_DIR}/CMakeCache.txt
+    rm -rf ${BUILD_DIR}
 fi
 
 THREADS=$((`nproc` + 2))
