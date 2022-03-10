@@ -42,6 +42,10 @@ set(SOURCES
     MeasureCalculator.cpp
 )
 
+if (BUILD_PC)
+    set(SOURCES ${SOURCES} measure/src/measure.cpp)
+endif()
+
 add_library(${NAME} ${SOURCES})
 
 target_include_directories(${NAME}

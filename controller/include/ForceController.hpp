@@ -68,7 +68,7 @@ private:
     QSharedPointer<MeasureController> m_measureController;
     QSharedPointer<DataSaver>         m_dataSaver;
 
-    double m_scaleKg {0.0};
+    float m_scaleKg {0.0};
 
     zmq::context_t context{1};
     zmq::socket_t socket{context, zmq::socket_type::pub};
