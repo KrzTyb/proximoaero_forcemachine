@@ -4,6 +4,7 @@
 #include "ForceTypes.hpp"
 
 #include <QJsonArray>
+#include <QTimer>
 
 #include <memory>
 #include "MeasureBroker.hpp"
@@ -21,11 +22,13 @@ public:
     ~MeasureController();
 
     void startMeasure(int measureTimeMS, int intervalMS);
-    void setScaleKg(double scaleKg) { m_scaleKg = scaleKg; };
-    void setHeightMeters(double meters) { m_heightMeters = meters; };
+    void setScaleKg(float scaleKg) { m_scaleKg = scaleKg; };
+    void setHeightMeters(float meters) { m_heightMeters = meters; };
 
 private slots:
     void measureFinished(const std::string& measures);
+
+    void pcMeasureFinished();
 
 signals:
     void measurementsReceived(MeasureStatus status, MeasureListPtr measurements);
@@ -34,6 +37,8 @@ private:
 
     std::shared_ptr<MeasureBroker> m_measureBroker;
 
-    double m_scaleKg = 0.0;
-    double m_heightMeters = 0.0;
+    float m_scaleKg = 0.0f;
+    float m_heightMeters = 0.0f;
+
+    QTimer m_testTimer;
 };
