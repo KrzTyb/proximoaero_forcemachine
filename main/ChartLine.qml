@@ -5,9 +5,37 @@ import Main.ChartJS 1.0
 Item {
     id: rootChartLine
 
+    function getxMax(measurements)
+    {
+        let maxX = 0.0
+        for (let value of measurements)
+        {
+            if (value.x > maxX)
+            {
+                maxX = value.x
+            }
+        }
+        return maxX
+    }
+    function getyMax(measurements)
+    {
+        let maxY = 0.0
+        for (let value of measurements)
+        {
+            if (value.y > maxY)
+            {
+                maxY = value.y
+            }
+        }
+        return maxY
+    }
+
     function setChartData(measurements)
     {
         chartLine.chartDataList = measurements
+
+        chartLine.chartOptions.scales.xAxes[0].ticks.max = getxMax(measurements)
+        chartLine.chartOptions.scales.yAxes[0].ticks.max = Math.round((getyMax(measurements) + 200.0) / 100.0) * 100.0
         chartLine.requestPaint()
     }
 
@@ -43,14 +71,13 @@ Item {
                             scaleLabel: {
                                 display: true,
                                 labelString: 'Przemieszczenie [mm]',
-                                // labelString: 'Czas [s]',
                                 fontColor: "black"
                             },
                             ticks: {
                                 beginAtZero: true,
                                 min: 0.0,
-                                max: 0.09,
-                                // max: 2.0,
+                                // max: 0.09,
+                                max: 0.0,
                                 fontColor: "black"
                             },
                             gridLines: {
@@ -64,14 +91,12 @@ Item {
                             scaleLabel: {
                                 display: true,
                                 labelString: 'Siła [N]',
-                                // labelString: 'Napięcie [V]',
                                 fontColor: "black"
                             },
                             ticks: {
                                 beginAtZero: true,
                                 min: -100.0,
-                                max: 1200.0,
-                                // max: 5.0,
+                                // max: 1200.0,
                                 fontColor: "black"
                             },
                             gridLines: {

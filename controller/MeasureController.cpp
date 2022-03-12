@@ -105,7 +105,7 @@ void MeasureController::pcMeasureFinished()
         rawMeasures.emplace_back(value);
     }
 
-    auto measureCalculator = std::make_shared<MeasureCalculator>(std::move(rawMeasures), 6.0f, 0.5f);
+    auto measureCalculator = std::make_shared<MeasureCalculator>(std::move(rawMeasures), 6.0, 0.5);
 
     for (const auto& element : measureCalculator->getResults())
     {
