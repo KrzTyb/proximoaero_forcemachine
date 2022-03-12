@@ -93,6 +93,8 @@ void MeasureController::startMeasure(int measureTimeMS, int intervalMS)
 
 #endif
 
+#if BUILD_PC == 1
+
 void MeasureController::pcMeasureFinished()
 {
     MeasureListPtr measureList = QSharedPointer<MeasureList>::create();
@@ -112,3 +114,5 @@ void MeasureController::pcMeasureFinished()
     }
     emit measurementsReceived(MeasureStatus::Ok, measureList);
 }
+
+#endif

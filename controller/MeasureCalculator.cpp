@@ -63,9 +63,10 @@ float calculateForce(float voltage)
 }
 
 std::pair<Displacement, Force> calculateDisplacement(const std::pair<TimeSec, Force>& forceInTime,
-    float& forceSum, MeasureCalculator::Scale scale, MeasureCalculator::Height height)
+    float& forceSum, float& forceSumSum, MeasureCalculator::Scale scale, MeasureCalculator::Height height)
 {
     forceSum += forceInTime.second;
+    forceSumSum += forceSum;
 
     auto sumScale = InitialScale + scale;
 
@@ -73,7 +74,7 @@ std::pair<Displacement, Force> calculateDisplacement(const std::pair<TimeSec, Fo
 
     auto second = ((Gravity * powf(forceInTime.first, 2.0f)) / 2.0f);
 
-    auto third = (powf(Dt, 2.0f) / sumScale) * forceSum;
+    auto third = (powf(Dt, 2.0f) / sumScale) * forceSumSum;
 
     auto displacement = first + second - third;
 
@@ -127,10 +128,11 @@ MeasureCalculator::MeasureCalculator(std::vector<int>&& rawMeasures, Scale scale
         });
     
     float forceSum = 0.0f;
+    float forceSumSum = 0.0f;
     // Obliczanie przemieszczenia
     std::transform(m_results.begin(), m_results.end(), m_results.begin(),
         [&](const auto& element)
         {
-            return calculateDisplacement(element, forceSum, scale, height);
+            return calculateDisplacement(element, forceSum, forceSumSum, scale, height);
         });
 }
