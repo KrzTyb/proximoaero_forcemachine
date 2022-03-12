@@ -81,6 +81,12 @@ void MeasureController::measureFinished(const std::string& measures)
 void MeasureController::startMeasure(int measureTimeMS, int intervalMS)
 {
     m_measureBroker->startMeasure();
+
+    QTimer::singleShot(measureTimeMS,
+        [this]()
+        {
+            emit captureMeasureFinished();
+        });
 };
 
 #else
@@ -113,6 +119,7 @@ void MeasureController::pcMeasureFinished()
         measureList->emplace_back(std::move(measureElement));
     }
     emit measurementsReceived(MeasureStatus::Ok, measureList);
+    emit captureMeasureFinished();
 }
 
 #endif

@@ -40,6 +40,8 @@ set(SOURCES
     
     include/MeasureCalculator.hpp
     MeasureCalculator.cpp
+
+    VideoController.cpp
 )
 
 if (BUILD_PC)

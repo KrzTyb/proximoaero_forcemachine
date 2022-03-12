@@ -19,6 +19,8 @@ class USBDeviceHandler : public QObject
 public:
     explicit USBDeviceHandler(QObject *parent = nullptr);
 
+    void initialize();
+
     bool isDiskAvailable() { return !usbStorageList.empty(); }
 
     USBDisk getDiskInfo() { return currentUSBDisk; }

@@ -36,6 +36,7 @@ private slots:
 
 signals:
     void measurementsReceived(MeasureStatus status, MeasureListPtr measurements);
+    void captureMeasureFinished();
 
 private:
 

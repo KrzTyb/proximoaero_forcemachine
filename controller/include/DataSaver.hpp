@@ -9,13 +9,6 @@
 
 #include "USBDeviceHandler.hpp"
 
-#include <QCamera>
-#include <QMediaRecorder>
-#include <QMediaMetaData>
-#include <QMediaDevices>
-#include <QMediaFormat>
-#include <QMediaCaptureSession>
-
 class DataSaver : public QObject
 {
     Q_OBJECT
@@ -23,7 +16,6 @@ class DataSaver : public QObject
 public:
     DataSaver(QSharedPointer<BackendConnector> uiConnector, QSharedPointer<USBDeviceHandler> usbHandler, QObject *parent = nullptr);
 
-    void startCapture();
     void clearData()
     {
         m_measures = nullptr;
@@ -40,23 +32,12 @@ public slots:
 
     void scaleChanged(QString scale);
 
-signals:
-    void captureFinished();
-
 private:
-
-    void startRecording();
 
     QSharedPointer<BackendConnector> m_uiConnector;
     QSharedPointer<USBDeviceHandler> m_usbHandler;
 
     MeasureListPtr  m_measures;
-
-
-    QMediaDevices m_devices;
-    QMediaCaptureSession m_captureSession;
-    QScopedPointer<QCamera> m_camera;
-    QScopedPointer<QMediaRecorder> m_mediaRecorder;
 
     QString m_scale;
 

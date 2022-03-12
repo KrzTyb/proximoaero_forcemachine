@@ -37,19 +37,14 @@ Item {
 
     Item {
         id: camera_view
-        visible: true
+        visible: false
         anchors.fill: parent
 
-        CaptureSession {
-            id: capture_session
-            videoOutput: camera_output
-            camera: Camera {
-
-            }
-        }
+        objectName: "camera_view"
 
         VideoOutput {
             id: camera_output
+            objectName: "camera_output"
             width: parent.width - 8
             height: parent.height - 8
             x: 8

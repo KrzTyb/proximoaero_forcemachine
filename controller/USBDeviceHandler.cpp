@@ -13,7 +13,10 @@
 
 USBDeviceHandler::USBDeviceHandler(QObject *parent) : QObject(parent)
 {
+}
 
+void USBDeviceHandler::initialize()
+{
     usbWatcher = QSharedPointer<QFileSystemWatcher>(new QFileSystemWatcher(this));
     usbWatcher->addPath("/dev/disk/by-label");
 
