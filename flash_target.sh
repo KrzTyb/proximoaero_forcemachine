@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-TARGET_IP=10.42.0.215
+TARGET_IP=10.42.0.68
 
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILD_DIR=${SRC_DIR}/build/arm-debug

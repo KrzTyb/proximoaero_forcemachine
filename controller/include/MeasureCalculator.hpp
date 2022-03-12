@@ -3,21 +3,21 @@
 #include <vector>
 #include <utility>
 
-using Voltage = float;
-using TimeSec = float;
+using Voltage = double;
+using TimeSec = double;
 using VoltageInTime = std::vector<std::pair<TimeSec, Voltage>>;
 
-using Displacement = float;
-using Force = float;
+using Displacement = double;
+using Force = double;
 using ForceInDisplacement = std::vector<std::pair<Displacement, Force>>;
 
 class MeasureCalculator
 {
 public:
     // Scale in [kg]
-    using Scale = float;
+    using Scale = double;
     // Height in [m]
-    using Height = float;
+    using Height = double;
 
     MeasureCalculator(std::vector<int>&& rawMeasures, Scale scale, Height height);
 

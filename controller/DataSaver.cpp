@@ -101,7 +101,6 @@ void DataSaver::onMeasureReceived(MeasureStatus status, MeasureListPtr measureme
     {
         emit m_uiConnector->blockExportClick(true);
     }
-    // emit m_uiConnector->blockExportClick(false); // TODO: Remove
 }
 
 void DataSaver::startRecording()

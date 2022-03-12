@@ -10,26 +10,26 @@
 namespace
 {
 
-constexpr const auto MaxAdcValue = 4'096.0f;
-constexpr const auto MaxVoltage = 5.0f;
+constexpr const auto MaxAdcValue = 4'096.0;
+constexpr const auto MaxVoltage = 5.0;
 
 #if BUILD_PC == 1
-constexpr const auto MeasureFrequency = 10'000.0f;
+constexpr const auto MeasureFrequency = 10'000.0;
 #else
-constexpr const auto MeasureFrequency = 8'000.0f;
+constexpr const auto MeasureFrequency = 8'000.0;
 #endif
 
-constexpr const auto Dt = (1.0f/MeasureFrequency);
+constexpr const auto Dt = (1.0/MeasureFrequency);
 
 // Przyśpieszenie ziemskie
-constexpr const float Gravity = 9.8105f;
+constexpr const double Gravity = 9.8105;
 
-constexpr const float ThresholdUp = 0.0f;
-constexpr const float ThresholdDown = 0.0f;
+constexpr const double ThresholdUp = 0.0;
+constexpr const double ThresholdDown = 0.0;
 
-constexpr const float InitialScale = 6.0f;
+constexpr const double InitialScale = 6.0;
 
-size_t findFirstAbove(const VoltageInTime& voltages, float threshold)
+size_t findFirstAbove(const VoltageInTime& voltages, double threshold)
 {
     size_t index = 0;
 
@@ -44,7 +44,7 @@ size_t findFirstAbove(const VoltageInTime& voltages, float threshold)
     return index;
 }
 
-size_t findEndTick(const VoltageInTime& voltages, float threshold, size_t startIndex)
+size_t findEndTick(const VoltageInTime& voltages, double threshold, size_t startIndex)
 {
     size_t index = startIndex;
     for (index = startIndex; index < voltages.size(); index++)
@@ -57,24 +57,24 @@ size_t findEndTick(const VoltageInTime& voltages, float threshold, size_t startI
     return index;
 }
 
-float calculateForce(float voltage)
+double calculateForce(double voltage)
 {
-    return (voltage - 0.5f) * 250.0;
+    return (voltage - 0.5) * 250.0;
 }
 
 std::pair<Displacement, Force> calculateDisplacement(const std::pair<TimeSec, Force>& forceInTime,
-    float& forceSum, float& forceSumSum, MeasureCalculator::Scale scale, MeasureCalculator::Height height)
+    double& forceSum, double& forceSumSum, MeasureCalculator::Scale scale, MeasureCalculator::Height height)
 {
     forceSum += forceInTime.second;
     forceSumSum += forceSum;
 
     auto sumScale = InitialScale + scale;
 
-    auto first = Gravity * sqrtf((2.0f * height) / Gravity) * forceInTime.first;
+    auto first = Gravity * sqrt((2.0 * height) / Gravity) * forceInTime.first;
 
-    auto second = ((Gravity * powf(forceInTime.first, 2.0f)) / 2.0f);
+    auto second = ((Gravity * pow(forceInTime.first, 2.0)) / 2.0);
 
-    auto third = (powf(Dt, 2.0f) / sumScale) * forceSumSum;
+    auto third = (pow(Dt, 2.0) / sumScale) * forceSumSum;
 
     auto displacement = first + second - third;
 
@@ -85,23 +85,23 @@ std::pair<Displacement, Force> calculateDisplacement(const std::pair<TimeSec, Fo
 
 MeasureCalculator::MeasureCalculator(std::vector<int>&& rawMeasures, Scale scale, Height height)
 {
-    TimeSec time = 0.0f;
+    TimeSec time = 0.0;
     for (const auto& value : rawMeasures)
     {
-        const float voltage = MaxVoltage * (static_cast<float>(value)/MaxAdcValue);
+        const double voltage = MaxVoltage * (static_cast<double>(value)/MaxAdcValue);
         m_voltages.emplace_back(std::make_pair(std::ref(time), std::ref(voltage)));
         time += Dt;
     }
 
     // Ucinanie pierwszego ticku zakłóceń (250ms)
-    constexpr auto FirstSamplesToRemove = static_cast<size_t>(MeasureFrequency * 0.25f);
+    constexpr auto FirstSamplesToRemove = static_cast<size_t>(MeasureFrequency * 0.25);
     m_voltages.erase(m_voltages.begin(), m_voltages.begin() + FirstSamplesToRemove);
 
     // Obliczanie średniej
-    auto sum = std::accumulate(m_voltages.begin(), m_voltages.end(), float(0.0f), [](auto& accumulated, const auto& el) {
+    auto sum = std::accumulate(m_voltages.begin(), m_voltages.end(), double(0.0), [](auto& accumulated, const auto& el) {
         return accumulated += el.second;
     });
-    float mean = static_cast<float>(sum) / static_cast<float>(m_voltages.size());
+    double mean = static_cast<double>(sum) / static_cast<double>(m_voltages.size());
 
     // Szukanie momentu uderzenia
     auto startTick = findFirstAbove(m_voltages, mean + ThresholdUp);
@@ -113,7 +113,7 @@ MeasureCalculator::MeasureCalculator(std::vector<int>&& rawMeasures, Scale scale
     m_impactVoltages = VoltageInTime{startImpact, endImpact};
 
     // Rozpoczęcie liczenia czasu od 0
-    float startTime = m_impactVoltages.at(0).first;
+    double startTime = m_impactVoltages.at(0).first;
     std::transform(m_impactVoltages.begin(), m_impactVoltages.end(), m_impactVoltages.begin(),
         [startTime](const auto& element)
         {
@@ -127,8 +127,8 @@ MeasureCalculator::MeasureCalculator(std::vector<int>&& rawMeasures, Scale scale
             return std::make_pair(element.first, calculateForce(element.second));
         });
     
-    float forceSum = 0.0f;
-    float forceSumSum = 0.0f;
+    double forceSum = 0.0;
+    double forceSumSum = 0.0;
     // Obliczanie przemieszczenia
     std::transform(m_results.begin(), m_results.end(), m_results.begin(),
         [&](const auto& element)

@@ -108,7 +108,7 @@ void ForceController::connectUI()
         }
         else
         {
-            m_scaleKg = scale.toFloat();
+            m_scaleKg = scale.toDouble();
         }
         m_measureController->setScaleKg(m_scaleKg);
     });
@@ -129,7 +129,7 @@ void ForceController::setCameraVisible()
 
 void ForceController::setChartData(MeasureList measurements)
 {
-    const auto samplesToRemove = static_cast<size_t>(std::floor(static_cast<float>(measurements.size()) / static_cast<float>(ContentPreviewWidthPixels)));
+    const auto samplesToRemove = static_cast<size_t>(std::floor(static_cast<double>(measurements.size()) / static_cast<double>(ContentPreviewWidthPixels)));
     
     if (samplesToRemove > 1)
     {
@@ -354,7 +354,7 @@ void ForceController::startMeasure()
     connect(m_uiConnector.get(), &BackendConnector::configEndClicked, obj,
     [this, obj](auto heightCM)
     {
-        m_measureController->setHeightMeters(heightCM / 100.0f);
+        m_measureController->setHeightMeters(heightCM / 100.0);
         obj->deleteLater();
         emit m_uiConnector->closeConfigPopup();
         qDebug() << "Go - height: " << heightCM << " cm";

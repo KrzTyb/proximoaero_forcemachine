@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 #include <QObject>
 #include "ForceTypes.hpp"
 
@@ -22,8 +24,8 @@ public:
     ~MeasureController();
 
     void startMeasure(int measureTimeMS, int intervalMS);
-    void setScaleKg(float scaleKg) { m_scaleKg = scaleKg; };
-    void setHeightMeters(float meters) { m_heightMeters = meters; };
+    void setScaleKg(double scaleKg) { m_scaleKg = scaleKg; };
+    void setHeightMeters(double meters) { m_heightMeters = meters; };
 
 private slots:
     void measureFinished(const std::string& measures);
@@ -39,8 +41,8 @@ private:
 
     std::shared_ptr<MeasureBroker> m_measureBroker;
 
-    float m_scaleKg = 0.0f;
-    float m_heightMeters = 0.0f;
+    double m_scaleKg = 0.0;
+    double m_heightMeters = 0.0;
 
     QTimer m_testTimer;
 };

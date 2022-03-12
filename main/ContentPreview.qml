@@ -37,7 +37,7 @@ Item {
 
     Item {
         id: camera_view
-        visible: false
+        visible: true
         anchors.fill: parent
 
         CaptureSession {
