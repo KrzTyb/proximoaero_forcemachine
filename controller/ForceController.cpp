@@ -13,6 +13,7 @@ ForceController::ForceController(QSharedPointer<BackendConnector> uiConnector,
     QSharedPointer<MeasureController> measureController,
     QSharedPointer<DataSaver> dataSaver,
     QSharedPointer<GPIOInputs> gpioInputs,
+    QSharedPointer<VideoController> videoController,
     QObject *parent)
     : QObject(parent),
       m_uiConnector{uiConnector},
@@ -20,6 +21,7 @@ ForceController::ForceController(QSharedPointer<BackendConnector> uiConnector,
       m_dataSaver{dataSaver},
       m_gpioInputs{gpioInputs},
       m_gpioOutputs{},
+      m_videoController{videoController},
       m_stepMotor{ {m_gpioInputs->getLowerLimitState(), m_gpioInputs->getUpperLimitState(), m_gpioInputs->getDoorState()} }
 {
 
@@ -165,6 +167,9 @@ void ForceController::initialize()
 {
 
     qDebug() << "Initialize started";
+
+    m_videoController->initialize();
+
     m_doorPopupPossible = true;
     m_gpioOutputs.setSupportingElectromagnetState(false);
     m_gpioOutputs.setBoltState(false);
@@ -400,7 +405,7 @@ void ForceController::executeMeasure()
 
     QObject *obj = new QObject(this);
 
-    connect(m_dataSaver.get(), &DataSaver::captureFinished, obj,
+    connect(m_measureController.get(), &MeasureController::captureMeasureFinished, obj,
     [this, obj]()
     {
         qDebug() << "Measure end";
@@ -411,7 +416,8 @@ void ForceController::executeMeasure()
     });
 
     setCameraVisible();
-    m_dataSaver->startCapture();
+    m_videoController->startCapture(MEASURE_TIME_MS);
+    m_dataSaver->clearData();
     m_measureController->startMeasure(MEASURE_TIME_MS, MEASURE_INTERVAL_MS);
 
     m_gpioOutputs.setSupportingElectromagnetState(false);

@@ -8,6 +8,8 @@
 #include <QDebug>
 #include <QProcess>
 
+#include <QTimer>
+
 DataSaver::DataSaver(QSharedPointer<BackendConnector> uiConnector, QSharedPointer<USBDeviceHandler> usbHandler, QObject *parent)
     : QObject(parent),
     m_uiConnector {uiConnector},
@@ -28,35 +30,11 @@ DataSaver::DataSaver(QSharedPointer<BackendConnector> uiConnector, QSharedPointe
     });
 
     connect(m_uiConnector.get(), &BackendConnector::exportButtonClicked, this, &DataSaver::onExportClicked);
-
-    m_camera.reset(new QCamera(QMediaDevices::defaultVideoInput()));
-    m_captureSession.setCamera(m_camera.data());
-
-    qDebug() << "Camera: " << m_camera->cameraDevice().description();
-
-    if (!m_mediaRecorder)
-    {
-        m_mediaRecorder.reset(new QMediaRecorder);
-        m_captureSession.setRecorder(m_mediaRecorder.data());
-    }
-
-    m_mediaRecorder->setOutputLocation(QUrl::fromLocalFile("/tmp/camera.mp4"));
-    m_mediaRecorder->setQuality(QMediaRecorder::HighQuality);
-
-    // auto mediaFormat = QMediaFormat{QMediaFormat::FileFormat::AVI};
-    auto mediaFormat = QMediaFormat{QMediaFormat::FileFormat::MPEG4};
-    mediaFormat.setVideoCodec(QMediaFormat::VideoCodec::H264);
-
-    m_mediaRecorder->setMediaFormat(mediaFormat);
-    m_mediaRecorder->setVideoFrameRate(30.0);
-    m_mediaRecorder->setEncodingMode(QMediaRecorder::EncodingMode::ConstantQualityEncoding);
-
-    m_camera->start();
 }
 
 void DataSaver::onMeasureReceived(MeasureStatus status, MeasureListPtr measurements)
 {
-    m_mediaRecorder->stop();
+
     if (status == MeasureStatus::Ok)
     {
         m_measures = measurements;
@@ -91,8 +69,6 @@ void DataSaver::onMeasureReceived(MeasureStatus status, MeasureListPtr measureme
         }
     }
 
-    emit captureFinished();
-
     if (m_usbHandler->isDiskAvailable() && m_measures)
     {
         emit m_uiConnector->blockExportClick(false);
@@ -101,17 +77,6 @@ void DataSaver::onMeasureReceived(MeasureStatus status, MeasureListPtr measureme
     {
         emit m_uiConnector->blockExportClick(true);
     }
-}
-
-void DataSaver::startRecording()
-{
-    m_mediaRecorder->record();
-}
-
-void DataSaver::startCapture()
-{
-    m_measures = nullptr;
-    startRecording();
 }
 
 void DataSaver::onExportClicked()

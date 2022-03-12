@@ -6,6 +6,7 @@
 #include "BackendConnector.hpp"
 #include "MeasureController.hpp"
 #include "DataSaver.hpp"
+#include "VideoController.hpp"
 
 #include "GPIOInputs.hpp"
 #include "GPIOOutputs.hpp"
@@ -30,6 +31,7 @@ public:
     QSharedPointer<MeasureController> measureController,
     QSharedPointer<DataSaver> dataSaver,
     QSharedPointer<GPIOInputs> gpioInputs,
+    QSharedPointer<VideoController> videoController,
     QObject *parent = nullptr);
 
     void initialize();
@@ -67,6 +69,7 @@ private:
     QSharedPointer<BackendConnector> m_uiConnector;
     QSharedPointer<MeasureController> m_measureController;
     QSharedPointer<DataSaver>         m_dataSaver;
+    QSharedPointer<VideoController>   m_videoController;
 
     double m_scaleKg {0.0};
 

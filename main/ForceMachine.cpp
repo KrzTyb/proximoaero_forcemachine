@@ -13,6 +13,8 @@
 #include "DataSaver.hpp"
 #include "GPIOInputs.hpp"
 
+#include "VideoController.hpp"
+
 #include <QDebug>
 
 #include <QTimer>
@@ -30,6 +32,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<MeasureList>();
     qRegisterMetaType<MeasureElement>();
 
+    QQmlApplicationEngine engine;
     QSharedPointer<BackendConnector> uiConnector = QSharedPointer<BackendConnector>::create();
 
     QSharedPointer<USBDeviceHandler> usbHandler = QSharedPointer<USBDeviceHandler>::create();
@@ -37,21 +40,9 @@ int main(int argc, char *argv[])
     QSharedPointer<DataSaver> dataSaver = QSharedPointer<DataSaver>::create(uiConnector, usbHandler);
 
     QSharedPointer<GPIOInputs> gpioInputs = QSharedPointer<GPIOInputs>::create();
-    QPointer<ForceController> forceController = new ForceController(uiConnector, measureController, dataSaver, gpioInputs);
-
-    QObject::connect(uiConnector.get(), &BackendConnector::scaleChanged, dataSaver.get(), &DataSaver::scaleChanged);
-
-    QThread::sleep(1);
-
-    QQmlApplicationEngine engine;
 
     engine.rootContext()->setContextProperty("BackendConnector", uiConnector.get());
-
     engine.addImportPath(u"qrc:/main"_qs);
-
-#if BUILD_PC == 1
-    debugMenu(app, engine, gpioInputs);
-#endif
 
     const QUrl url(u"qrc:/main/Main/main.qml"_qs);
     QObject::connect(
@@ -64,7 +55,27 @@ int main(int argc, char *argv[])
         Qt::QueuedConnection);
     engine.load(url);
 
-    QTimer::singleShot(100, forceController.get(), [&forceController](){forceController->initialize();} );
+    QSharedPointer<VideoController> videoController = QSharedPointer<VideoController>::create(engine.rootObjects().at(0));
+
+    QPointer<ForceController> forceController = new ForceController(uiConnector, measureController, dataSaver, gpioInputs, videoController);
+
+    QObject::connect(uiConnector.get(), &BackendConnector::scaleChanged, dataSaver.get(), &DataSaver::scaleChanged);
+
+    // QThread::sleep(1);
+
+#if BUILD_PC == 1
+    debugMenu(app, engine, gpioInputs);
+#endif
+
+    // QTimer::singleShot(100, forceController.get(),
+    // [&]()
+    // {
+    //     usbHandler->initialize();
+    //     forceController->initialize();
+    // });
+
+    usbHandler->initialize();
+    forceController->initialize();
 
     return app.exec();
 }
