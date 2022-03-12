@@ -28,7 +28,9 @@ public:
 private slots:
     void measureFinished(const std::string& measures);
 
+#if BUILD_PC == 1
     void pcMeasureFinished();
+#endif
 
 signals:
     void measurementsReceived(MeasureStatus status, MeasureListPtr measurements);
