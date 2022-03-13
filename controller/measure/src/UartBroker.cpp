@@ -6,23 +6,34 @@
 
 #include <QDebug>
 
-constexpr auto UartPort = "ttyS0";
+// constexpr auto UartPort = "ttyS0";
+constexpr auto UartPort = "ttyACM0";
 
-constexpr auto UartBaudRate = 115200;
-// constexpr auto UartBaudRate = 921600;
+// constexpr auto UartBaudRate = 115200;
+constexpr auto UartBaudRate = 921600;
 
 UartBroker::UartBroker()
     : QObject(nullptr)
 {
-    auto port = QSerialPortInfo{"ttyS0"};
+    auto port = QSerialPortInfo{UartPort};
     m_serialPort.setPort(port);
 
     m_serialPort.setBaudRate(UartBaudRate);
 
     m_serialPort.open(QIODeviceBase::ReadWrite);
-    m_serialPort.clear();
 
     connect(&m_serialPort, &QIODevice::readyRead, this, &UartBroker::onReadyRead);
+
+    connect(&m_serialPort, &QSerialPort::errorOccurred, this,
+    [this](const auto error)
+    {
+        if (error != QSerialPort::NoError)
+        {
+            qDebug() << "SerialPort error: " << error;
+            m_serialPort.clearError();
+        }
+    });
+
 }
 
 UartBroker::~UartBroker()
@@ -35,9 +46,11 @@ void UartBroker::send(const std::string& message)
 {
     m_messageToSend = message;
 
-    m_messageToSend += "\n";
     // qDebug() << "Message sended: [" << QString::fromStdString(m_messageToSend) << "]";
+
+    m_messageToSend += "\n";
     m_serialPort.write(m_messageToSend.c_str(), m_messageToSend.size());
+    m_serialPort.flush();
 }
 
 void UartBroker::setReceiver(TransportDelegate* receiver)
