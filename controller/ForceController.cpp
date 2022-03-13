@@ -272,7 +272,7 @@ void ForceController::goDown()
                     [this]()
                     {
                         m_gpioOutputs.setBoltState(false);
-                        QTimer::singleShot(1000, this, [this](){goUp();});
+                        QTimer::singleShot(1000, this, [this](){goHalfMeterFromDown();});
                     } 
                 );
             }
@@ -333,7 +333,8 @@ void ForceController::goHalfMeterFromUp()
         m_doorPopupPossible = false;
     });
 
-    m_stepMotor.go(1000, StepDir::Down);
+    // Od góry aby zjechac na 50cm - całość 106.5cm czyli 1065mm - 500 = 565mm
+    m_stepMotor.go(565, StepDir::Down);
 }
 
 void ForceController::startMeasure()
@@ -531,5 +532,31 @@ void ForceController::goHalfMeterFromDown()
         startMeasure();
     });
 
-    m_stepMotor.go(1000, StepDir::Up);
+    m_stepMotor.go(500, StepDir::Up);
+}
+
+void ForceController::goHalfMeterFromDownCalib()
+{
+    qDebug() << "Go to 0.5m";
+    QObject *obj = new QObject(this);
+
+    connect(&m_stepMotor, &StepMotor::goFinished, obj,
+    [this, obj]()
+    {
+        obj->deleteLater();
+        m_gpioOutputs.setRedLedState(false);
+        m_ledStates.RED = false;
+        m_gpioOutputs.setBlueLedState(true);
+        m_ledStates.BLUE = true;
+        m_gpioOutputs.setGreenLedState(false);
+        m_ledStates.GREEN = false;
+        m_gpioOutputs.setWhiteLedState(true);
+        m_ledStates.WHITE = true;
+        qDebug() << "Calibration finished";
+        emit m_uiConnector->showCalibrationPopup(false);
+        m_ready = true;
+        m_doorPopupPossible = false;
+    });
+
+    m_stepMotor.go(500, StepDir::Up);
 }

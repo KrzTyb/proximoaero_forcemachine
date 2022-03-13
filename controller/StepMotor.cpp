@@ -204,5 +204,5 @@ void StepMotorWorker::stop()
 
 int64_t StepMotorWorker::milimetersToSteps(Milimeters milimeters)
 {
-    return static_cast<int64_t>((milimeters * STEPS_PER_MILIMETER) / 2.0);
+    return milimeters * STEPS_PER_MILIMETER;
 }
