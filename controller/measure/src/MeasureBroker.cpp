@@ -51,10 +51,6 @@ void MeasureBroker::onMessageReceived(const std::string& message)
                 {
                     m_measureState = MeasureState::Measuring;
                 }
-                else
-                {
-                    startMeasure();
-                }
             }
             break;
         case MeasureState::Measuring:

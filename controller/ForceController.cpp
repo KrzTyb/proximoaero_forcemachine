@@ -403,15 +403,21 @@ void ForceController::executeMeasure()
 {
     qDebug() << "Measure started";
 
-    QObject *obj = new QObject(this);
-
-    connect(m_measureController.get(), &MeasureController::captureMeasureFinished, obj,
-    [this, obj]()
+    QObject *captureLambda = new QObject(this);
+    connect(m_measureController.get(), &MeasureController::captureMeasureFinished, captureLambda,
+    [this, captureLambda]()
     {
         qDebug() << "Measure end";
-        obj->deleteLater();
+        captureLambda->deleteLater();
 
         m_gpioOutputs.setBoltState(false);
+        emit m_uiConnector->blockStartClick(false);
+    });
+    QObject *measureLambda = new QObject(this);
+    connect(m_measureController.get(), &MeasureController::measurementsReceived, measureLambda,
+    [this, measureLambda](auto, auto)
+    {
+        measureLambda->deleteLater();
         presentation();
     });
 
@@ -439,8 +445,6 @@ void ForceController::presentation()
     {
         hidePreview();
     }
-    emit m_uiConnector->blockStartClick(false);
-
 }
 
 void ForceController::prepareToReady()
