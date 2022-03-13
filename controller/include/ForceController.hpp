@@ -65,6 +65,7 @@ private:
 
     void prepareToReady();
     void goHalfMeterFromDown();
+    void goHalfMeterFromDownCalib();
 
     QSharedPointer<BackendConnector> m_uiConnector;
     QSharedPointer<MeasureController> m_measureController;
