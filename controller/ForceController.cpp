@@ -127,6 +127,7 @@ void ForceController::connectUI()
 void ForceController::onStartClicked()
 {
     m_doorPopupPossible = true;
+    qDebug() << "Start clicked";
     emit m_uiConnector->blockStartClick(true);
     executeMeasure();
 }
@@ -253,7 +254,7 @@ void ForceController::goDown()
                     [this]()
                     {
                         m_gpioOutputs.setBoltState(false);
-                        QTimer::singleShot(1000, this, [this](){goHalfMeterFromDown();});
+                        QTimer::singleShot(1000, this, [this](){goHalfMeterFromDownCalib();});
                     } 
                 );
             }
