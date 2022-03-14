@@ -110,7 +110,15 @@ void ForceController::connectUI()
         }
         else
         {
-            m_scaleKg = scale.toDouble();
+            bool isOk = false;
+            if (auto value = scale.toDouble(&isOk); isOk)
+            {
+                m_scaleKg = value;
+            }
+            else
+            {
+                m_scaleKg = 0.0;
+            }
         }
         m_measureController->setScaleKg(m_scaleKg);
     });
@@ -132,7 +140,7 @@ void ForceController::setCameraVisible()
 void ForceController::setChartData(MeasureList measurements)
 {
     const auto samplesToRemove = static_cast<size_t>(std::floor(static_cast<double>(measurements.size()) / static_cast<double>(ContentPreviewWidthPixels)));
-    
+
     if (samplesToRemove > 1)
     {
         MeasureList listForChart;

@@ -10,6 +10,10 @@
 
 #include <QTimer>
 
+#include <QLocale>
+
+constexpr const double InitialScale = 6.0;
+
 DataSaver::DataSaver(QSharedPointer<BackendConnector> uiConnector, QSharedPointer<USBDeviceHandler> usbHandler, QObject *parent)
     : QObject(parent),
     m_uiConnector {uiConnector},
@@ -53,16 +57,20 @@ void DataSaver::onMeasureReceived(MeasureStatus status, MeasureListPtr measureme
         QFile data(filename);
         if(data.open(QFile::WriteOnly | QFile::Truncate))
         {
+            QLocale locale{QLocale::Polish};
+
             QTextStream output(&data);
             // Scale
             output << "Waga: " << m_scale << "kg" << "\n";
             // Header
-            output << "Siła [N]" << "\t" << "Przemieszczenie [mm]" << "\n";
+            output << "Przemieszczenie [m]" << "\t" << "Siła [N]" << "\n";
 
             // Data
             for (const auto& measureElement : *m_measures)
             {
-                output << measureElement.y() << "\t" << measureElement.x() << "\n";
+                output << locale.toString(measureElement.x(), 'f')
+                    << "\t" << locale.toString(measureElement.y(), 'f')
+                    << "\n";
             }
 
             data.close();
@@ -81,35 +89,87 @@ void DataSaver::onMeasureReceived(MeasureStatus status, MeasureListPtr measureme
 
 void DataSaver::onExportClicked()
 {
+    qDebug() << "Saving to [" << m_usbHandler->getDiskInfo().path << "]";
     if (m_measures == nullptr)
     {
+        qDebug() << "Measures nullptr";
         return;
     }
     if (!m_usbHandler->isDiskAvailable())
     {
+        qDebug() << "Disk not available";
         return;
     }
 
     QProcess syncProcess;
 
-    syncProcess.start("mkdir /mnt/usb");
-    syncProcess.waitForFinished();
-    syncProcess.start("mount " + m_usbHandler->getDiskInfo().path + " /mnt/usb");
-    syncProcess.waitForFinished();
-    syncProcess.start("cp /tmp/measure.csv /mnt/usb/pomiar.csv");
-    syncProcess.waitForFinished();
-    syncProcess.start("cp /tmp/camera.mp4 /mnt/usb/wideo.mp4");
-    syncProcess.waitForFinished();
-    syncProcess.start("umount /mnt/usb");
+    QStringList processArguments;
+
+    auto checkStatus = 
+        [&](auto whichProcess)
+        {
+            if (syncProcess.exitStatus() != QProcess::ExitStatus::NormalExit)
+            {
+                qDebug() << "Process [" << whichProcess
+                    << "] with exit status code: " << syncProcess.exitCode();
+            }
+        };
+
+    auto checkOutput =
+        [&](auto whichProcess)
+        {
+            qDebug() << "Process [" << whichProcess
+                << "] stdout: " << syncProcess.readAllStandardOutput();
+            qDebug() << "Process [" << whichProcess
+                << "] stderr: " << syncProcess.readAllStandardError();
+        };
+
+
+    processArguments = QStringList{"-p", "/tmp/usb"};
+    syncProcess.start("mkdir", processArguments);
     syncProcess.waitForFinished();
 
+    checkOutput("mkdir");
+
+    processArguments = QStringList{m_usbHandler->getDiskInfo().path, "/tmp/usb"};
+    syncProcess.start("mount", processArguments);
+    syncProcess.waitForFinished();
+
+    checkOutput("Mount");
+
+    processArguments = QStringList{"/tmp/measure.csv", "/tmp/usb/pomiar.csv"};
+    syncProcess.start("cp", processArguments);
+    syncProcess.waitForFinished();
+
+    checkOutput("CopyMeasure");
+
+    processArguments = QStringList{"/tmp/camera.mp4", "/tmp/usb/wideo.mp4"};
+    syncProcess.start("cp", processArguments);
+    syncProcess.waitForFinished();
+
+    checkOutput("CopyVideo");
+
+    processArguments = QStringList{"/tmp/usb"};
+    syncProcess.start("umount", processArguments);
+    syncProcess.waitForFinished();
+
+    checkOutput("Umount");
+
+
+    qDebug() << "Saving finished";
 }
 
 void DataSaver::scaleChanged(QString scale)
 {
-    m_scale = scale;
-    if (m_scale.isNull())
+    QLocale locale{QLocale::Polish};
+
+    bool isOk = false;
+    if (auto value = scale.toDouble(&isOk); isOk)
     {
-        m_scale = "0";
+        m_scale = locale.toString(value + InitialScale, 'f', 1);
+    }
+    else
+    {
+        m_scale = locale.toString(InitialScale, 'f', 1);
     }
 }
