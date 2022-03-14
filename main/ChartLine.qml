@@ -70,7 +70,7 @@ Item {
                             type: 'linear',
                             scaleLabel: {
                                 display: true,
-                                labelString: 'Przemieszczenie [mm]',
+                                labelString: 'Przemieszczenie [m]',
                                 fontColor: "black"
                             },
                             ticks: {
