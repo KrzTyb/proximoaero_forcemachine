@@ -12,6 +12,8 @@
 #include <cstdlib>
 #include <memory>
 
+#include <QFile>
+
 #include "TransportBuilder.hpp"
 #include "MeasureCalculator.hpp"
 #include "ForceTypes.hpp"
@@ -47,6 +49,20 @@ MeasureController::~MeasureController()
 void MeasureController::measureFinished(const std::string& measures)
 {
     // qDebug() << "MeasureFinished: " << QString::fromStdString(measures);
+
+    QString filename {"/tmp/test.json"};
+
+    QFile data(filename);
+
+    if(data.open(QFile::WriteOnly | QFile::Truncate))
+    {
+
+        QTextStream output(&data);
+
+        output << QString::fromStdString(measures);
+
+        data.close();
+    }
 
     std::vector<int> rawMeasures;
 
