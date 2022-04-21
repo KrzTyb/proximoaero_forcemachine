@@ -84,6 +84,7 @@ void MeasureController::measureFinished(const std::string& measures)
             MeasureElement measureElement{element.second, element.first};
             measureList->emplace_back(std::move(measureElement));
         }
+        qDebug() << "Measure size: " << measureList->size();
         emit measurementsReceived(MeasureStatus::Ok, measureList);
     }
     else
