@@ -36,9 +36,16 @@ public:
         return m_results;
     }
 
+    bool isOk() const
+    {
+        return m_isOk;
+    }
+
 private:
     VoltageInTime m_voltages;
     VoltageInTime m_impactVoltages;
 
     ForceInDisplacement m_results;
+
+    bool m_isOk = false;
 };

@@ -29,13 +29,31 @@ Item {
         }
         return maxY
     }
+    function getyMin(measurements)
+    {
+        if (measurements.length <= 0)
+        {
+            return 0.0
+        }
+
+        let minY = measurements[0].y
+        for (let value of measurements)
+        {
+            if (value.y < minY)
+            {
+                minY = value.y
+            }
+        }
+        return minY
+    }
 
     function setChartData(measurements)
     {
         chartLine.chartDataList = measurements
 
-        chartLine.chartOptions.scales.xAxes[0].ticks.max = getxMax(measurements)
+        chartLine.chartOptions.scales.xAxes[0].ticks.max = Math.ceil((getxMax(measurements)) * 1000.0) / 1000.0
         chartLine.chartOptions.scales.yAxes[0].ticks.max = Math.round((getyMax(measurements) + 200.0) / 100.0) * 100.0
+        chartLine.chartOptions.scales.yAxes[0].ticks.min = Math.round((getyMin(measurements) - 200.0) / 100.0) * 100.0
         chartLine.requestPaint()
     }
 

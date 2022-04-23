@@ -22,9 +22,6 @@
 #include "measure.hpp"
 #endif
 
-constexpr double FORCE_CONVERT_VALUE = 2000.0 / 9.0;
-constexpr double K_TENSO = 1.5;
-
 MeasureController::MeasureController(QObject *parent)
     : QObject(parent)
 {
@@ -79,6 +76,12 @@ void MeasureController::measureFinished(const std::string& measures)
 
         auto measureCalculator = std::make_shared<MeasureCalculator>(std::move(rawMeasures), m_scaleKg, m_heightMeters);
 
+        if (!measureCalculator->isOk())
+        {
+            emit measurementsReceived(MeasureStatus::Error, measureList);
+            return;
+        }
+
         for (const auto& element : measureCalculator->getResults())
         {
             MeasureElement measureElement{element.second, element.first};
@@ -128,7 +131,7 @@ void MeasureController::pcMeasureFinished()
         rawMeasures.emplace_back(value);
     }
 
-    auto measureCalculator = std::make_shared<MeasureCalculator>(std::move(rawMeasures), 6.0, 0.5);
+    auto measureCalculator = std::make_shared<MeasureCalculator>(std::move(rawMeasures), 0.0, 0.5);
 
     for (const auto& element : measureCalculator->getResults())
     {
