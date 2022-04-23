@@ -6,6 +6,7 @@
 #include <functional>
 #include <algorithm>
 #include <numeric>
+#include <tuple>
 
 #include <QDebug>
 
@@ -16,7 +17,7 @@ constexpr const auto MaxAdcValue = 4'096.0;
 constexpr const auto MaxVoltage = 3.3;
 
 #if BUILD_PC == 1
-constexpr const auto MeasureFrequency = 10'000.0;
+constexpr const auto MeasureFrequency = 8'000.0;
 #else
 constexpr const auto MeasureFrequency = 8'000.0;
 #endif
@@ -32,6 +33,9 @@ constexpr const double ThresholdDown = 0.0;
 constexpr const double InitialScale = 6.0;
 
 constexpr const auto MovingFilterLength = 8;
+
+constexpr auto AddToEndTickS = 0.02;
+constexpr auto AddToEndTickSamples = static_cast<int>(MeasureFrequency * AddToEndTickS);
 
 void movingFilter(VoltageInTime& voltages)
 {
@@ -71,32 +75,64 @@ void movingFilter(VoltageInTime& voltages)
     voltages.resize(voltages.size() - MovingFilterLength);
 }
 
-size_t findFirstAbove(const VoltageInTime& voltages, double threshold)
+size_t findStartTick(const VoltageInTime& voltages, size_t maxIndex, double mean)
 {
-    size_t index = 0;
+    size_t index = maxIndex;
 
-    for (const auto& voltage : voltages)
+    for (size_t i = maxIndex; i >= 0; i--)
     {
-        if (voltage.second > threshold)
+        if (voltages.at(i).second <= mean)
         {
-            return index;
+            index = i;
+            break;
         }
-        index++;
     }
+
     return index;
 }
 
-size_t findEndTick(const VoltageInTime& voltages, double threshold, size_t startIndex)
+size_t findEndTick(const VoltageInTime& voltages, size_t maxIndex, double mean)
 {
-    size_t index = startIndex;
-    for (index = startIndex; index < voltages.size(); index++)
+    size_t index = maxIndex;
+
+    for (size_t i = maxIndex; i < voltages.size(); i++)
     {
-        if (voltages.at(index).second < threshold)
+        if (voltages.at(i).second <= mean)
         {
-            return index;
+            index = i;
+            break;
         }
     }
+
     return index;
+}
+
+size_t findMaxIndex(const VoltageInTime& voltages)
+{
+    auto maxValue = voltages.at(0).second;
+    size_t index = 0;
+
+    for (size_t i = 0; i < voltages.size(); i++)
+    {
+        if (voltages.at(i).second > maxValue)
+        {
+            maxValue = voltages.at(i).second;
+            index = i;
+        }
+    }
+
+    return index;
+}
+
+using StartTick = size_t;
+using MaxIndex = size_t;
+using EndTick = size_t;
+std::tuple<StartTick, MaxIndex, EndTick> findStartEnd(const VoltageInTime& voltages, double mean)
+{
+    auto maxIndex = findMaxIndex(voltages);
+    auto startTick = findStartTick(voltages, maxIndex, mean);
+    auto endTick = findEndTick(voltages, maxIndex, mean);
+    return {startTick, maxIndex, endTick};
 }
 
 double calculateForce(double voltage)
@@ -127,21 +163,25 @@ std::pair<Displacement, Force> calculateDisplacement(const std::pair<TimeSec, Fo
 
 MeasureCalculator::MeasureCalculator(std::vector<int>&& rawMeasures, Scale scale, Height height)
 {
+    constexpr auto VoltagePerStep = MaxVoltage / MaxAdcValue;
     try
     {
         TimeSec time = 0.0;
         for (const auto& value : rawMeasures)
         {
-            const double voltage = MaxVoltage * (static_cast<double>(value)/MaxAdcValue);
+            const double voltage = static_cast<double>(value) * VoltagePerStep;
             m_voltages.emplace_back(std::make_pair(std::ref(time), std::ref(voltage)));
             time += Dt;
         }
 
         movingFilter(m_voltages);
 
-        // Ucinanie pierwszego ticku zakłóceń (250ms)
-        constexpr auto FirstSamplesToRemove = static_cast<size_t>(MeasureFrequency * 0.25);
-        m_voltages.erase(m_voltages.begin(), m_voltages.begin() + FirstSamplesToRemove);
+        // Obliczanie siły
+        std::transform(m_voltages.begin(), m_voltages.end(), m_voltages.begin(),
+            [](const auto& element)
+            {
+                return std::make_pair(element.first, calculateForce(element.second));
+            });
 
         // Obliczanie średniej
         auto sum = std::accumulate(m_voltages.begin(), m_voltages.end(), double(0.0), [](auto& accumulated, const auto& el) {
@@ -150,9 +190,17 @@ MeasureCalculator::MeasureCalculator(std::vector<int>&& rawMeasures, Scale scale
         double mean = static_cast<double>(sum) / static_cast<double>(m_voltages.size());
 
         // Szukanie momentu uderzenia
-        auto startTick = findFirstAbove(m_voltages, mean + ThresholdUp);
-        auto endTick = findEndTick(m_voltages, mean - ThresholdDown, startTick);
-        endTick += 100; // Add 100ms
+        auto [startTick, maxIndex, endTick] = findStartEnd(m_voltages, mean);
+        if (endTick > startTick)
+        {
+            // endTick += AddToEndTickSamples; // Dodaj więcej próbek
+            endTick += (endTick - startTick); // Dodaj więcej próbek
+            if (endTick >= m_voltages.size())
+            {
+                endTick = m_voltages.size() - 1;
+            }
+        }
+
         auto startImpact = (startTick >= m_voltages.size()) ? m_voltages.end() : (m_voltages.begin() + startTick);
         auto endImpact = (endTick >= m_voltages.size()) ? m_voltages.end() : (m_voltages.begin() + endTick);
 
@@ -166,13 +214,14 @@ MeasureCalculator::MeasureCalculator(std::vector<int>&& rawMeasures, Scale scale
                 return std::make_pair(element.first - startTime, element.second);
             });
 
-        // Obliczanie siły
+        // Początek uderzenia powinien zaczynać się od 0 w osi Y
+        auto firstValue = m_impactVoltages.at(0).second;
         std::transform(m_impactVoltages.begin(), m_impactVoltages.end(), std::back_inserter(m_results),
-            [](const auto& element)
+            [firstValue](const auto& element)
             {
-                return std::make_pair(element.first, calculateForce(element.second));
+                return std::make_pair(element.first, element.second - firstValue);
             });
-        
+
         double forceSum = 0.0;
         double forceSumSum = 0.0;
         // Obliczanie przemieszczenia
@@ -181,6 +230,8 @@ MeasureCalculator::MeasureCalculator(std::vector<int>&& rawMeasures, Scale scale
             {
                 return calculateDisplacement(element, forceSum, forceSumSum, scale, height);
             });
+
+        m_isOk = true;
     }
     catch (const std::exception& ex)
     {
