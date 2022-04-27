@@ -218,6 +218,12 @@ Item {
         visible: false
     }
 
+    ExportPopup
+    {
+        id: exportPopup
+        visible: false
+    }
+
     Connections {
         target: configPopup
         function onNext2Clicked(height)
@@ -276,6 +282,16 @@ Item {
             measurePopup.indicatorVisible = false
             measurePopup.infoText = qsTr("Wciśnij START")
             measurePopup.visible = visible
+        }
+
+        function onShowExportResultPopup(saved)
+        {
+            if (saved) {
+                exportPopup.popupText = qsTr("Zapisano pomiary")
+            } else {
+                exportPopup.popupText = qsTr("Błąd zapisu pomiarów")
+            }
+            exportPopup.visible = true
         }
     }
 }
