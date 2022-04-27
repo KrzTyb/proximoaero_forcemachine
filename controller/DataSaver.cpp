@@ -77,6 +77,8 @@ void DataSaver::onMeasureReceived(MeasureStatus status, MeasureListPtr measureme
         }
     }
 
+    emit m_uiConnector->saveChartImage("/tmp/wykres.jpg");
+
     if (m_usbHandler->isDiskAvailable() && m_measures)
     {
         emit m_uiConnector->blockExportClick(false);
@@ -93,11 +95,13 @@ void DataSaver::onExportClicked()
     if (m_measures == nullptr)
     {
         qDebug() << "Measures nullptr";
+        emit m_uiConnector->showExportResultPopup(false);
         return;
     }
     if (!m_usbHandler->isDiskAvailable())
     {
         qDebug() << "Disk not available";
+        emit m_uiConnector->showExportResultPopup(false);
         return;
     }
 
@@ -149,6 +153,12 @@ void DataSaver::onExportClicked()
 
     checkOutput("CopyVideo");
 
+    processArguments = QStringList{"/tmp/wykres.jpg", "/tmp/usb/wykres.jpg"};
+    syncProcess.start("cp", processArguments);
+    syncProcess.waitForFinished();
+
+    checkOutput("CopyChart");
+
     processArguments = QStringList{"/tmp/usb"};
     syncProcess.start("umount", processArguments);
     syncProcess.waitForFinished();
@@ -157,6 +167,8 @@ void DataSaver::onExportClicked()
 
 
     qDebug() << "Saving finished";
+
+    emit m_uiConnector->showExportResultPopup(true);
 }
 
 void DataSaver::scaleChanged(QString scale)

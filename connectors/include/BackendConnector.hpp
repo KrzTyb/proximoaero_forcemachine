@@ -35,6 +35,10 @@ signals:
 
     void measurementsReceived(MeasureList measurements);
 
+    void saveChartImage(QString path);
+
+    void showExportResultPopup(bool saved);
+
     void setCameraVisible(bool visible);
     void setChartVisible(bool visible);
 

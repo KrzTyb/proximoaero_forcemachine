@@ -18,6 +18,7 @@ set(QML_SOURCES
     CalibrationPopup.qml
     ConfigPopup.qml
     MeasurePopup.qml
+    ExportPopup.qml
 
     DebugMenu.qml
 )

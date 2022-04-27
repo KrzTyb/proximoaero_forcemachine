@@ -49,12 +49,19 @@ Item {
 
     function setChartData(measurements)
     {
-        chartLine.chartDataList = measurements
+        chartView.chartDataList = measurements
 
-        chartLine.chartOptions.scales.xAxes[0].ticks.max = Math.ceil((getxMax(measurements)) * 1000.0) / 1000.0
-        chartLine.chartOptions.scales.yAxes[0].ticks.max = Math.round((getyMax(measurements) + 200.0) / 100.0) * 100.0
-        chartLine.chartOptions.scales.yAxes[0].ticks.min = Math.round((getyMin(measurements) - 200.0) / 100.0) * 100.0
-        chartLine.requestPaint()
+        chartView.chartOptions.scales.xAxes[0].ticks.max = Math.ceil((getxMax(measurements)) * 1000.0) / 1000.0
+        chartView.chartOptions.scales.yAxes[0].ticks.max = Math.round((getyMax(measurements) + 200.0) / 100.0) * 100.0
+        chartView.chartOptions.scales.yAxes[0].ticks.min = Math.round((getyMin(measurements) - 200.0) / 100.0) * 100.0
+        chartView.requestPaint()
+    }
+
+    function saveChartImage(path)
+    {
+        rootChartLine.grabToImage(function(result) {
+                           result.saveToFile(path);
+                       });
     }
 
     Rectangle {
@@ -63,7 +70,7 @@ Item {
     }
 
     ChartView {
-        id: chartLine
+        id: chartView
         anchors.fill: parent
         chartType: 'line'
 

@@ -92,5 +92,10 @@ Item {
         {
             chartline.setChartData(measurements)
         }
+
+        function onSaveChartImage(imagePath)
+        {
+            chartline.saveChartImage(imagePath)
+        }
     }
 }
